@@ -25,9 +25,13 @@ namespace Voidbound.Player
         [SerializeField] private AudioClip jumpSound;
         [SerializeField] private AudioClip landSound;
 
+        [Header("Knockback Settings")]
+        [SerializeField] private float knockbackDecay = 7.0f;
+
         // References & State
         private CharacterController characterController;
         private Vector3 velocity;
+        private Vector3 knockbackVelocity;
         private float pitch;
         private bool isGrounded;
         private bool wasGroundedLastFrame;
@@ -35,6 +39,17 @@ namespace Voidbound.Player
 
         public bool IsGrounded => isGrounded;
         public Vector3 CurrentVelocity => characterController != null ? characterController.velocity : Vector3.zero;
+        public Vector3 CurrentKnockback => knockbackVelocity;
+
+        public void AddKnockback(Vector3 force)
+        {
+            knockbackVelocity = new Vector3(force.x, 0f, force.z);
+            if (force.y > 0f)
+            {
+                velocity.y = force.y;
+                isGrounded = false;
+            }
+        }
 
         private void Awake()
         {
@@ -131,7 +146,18 @@ namespace Voidbound.Player
             // Calculate movement vector relative to player facing direction
             float targetSpeed = isSprinting ? sprintSpeed : walkSpeed;
             Vector3 moveDirection = (transform.forward * inputVector.y + transform.right * inputVector.x).normalized;
-            characterController.Move(moveDirection * targetSpeed * Time.deltaTime);
+            Vector3 horizontalMovement = (moveDirection * targetSpeed + knockbackVelocity) * Time.deltaTime;
+            characterController.Move(horizontalMovement);
+
+            // Damp knockback over time
+            if (knockbackVelocity.sqrMagnitude > 0.01f)
+            {
+                knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, knockbackDecay * Time.deltaTime);
+            }
+            else
+            {
+                knockbackVelocity = Vector3.zero;
+            }
 
             // Handle Jump
             if (jumpPressed && isGrounded)
@@ -180,6 +206,7 @@ namespace Voidbound.Player
             }
 
             velocity = Vector3.zero;
+            knockbackVelocity = Vector3.zero;
 
             if (characterController != null)
             {
@@ -193,6 +220,21 @@ namespace Voidbound.Player
             if (!enabled)
             {
                 velocity = Vector3.zero;
+                knockbackVelocity = Vector3.zero;
+            }
+        }
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            var hammerKnockback = hit.collider.GetComponent<Voidbound.Obstacles.HammerKnockback>();
+            if (hammerKnockback == null)
+            {
+                hammerKnockback = hit.collider.GetComponentInParent<Voidbound.Obstacles.HammerKnockback>();
+            }
+
+            if (hammerKnockback != null)
+            {
+                hammerKnockback.ApplyPush(gameObject);
             }
         }
 
@@ -210,6 +252,7 @@ namespace Voidbound.Player
             else
             {
                 velocity = Vector3.zero;
+                knockbackVelocity = Vector3.zero;
             }
         }
     }

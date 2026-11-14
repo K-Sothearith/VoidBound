@@ -227,9 +227,12 @@ namespace Voidbound.Core
 
         public static string FormatTime(float timeInSeconds)
         {
+            if (timeInSeconds < 0f) timeInSeconds = 0f;
             int minutes = (int)(timeInSeconds / 60f);
             float seconds = timeInSeconds % 60f;
-            return $"{minutes:00}:{seconds:04.1f}";
+            int sec = (int)seconds;
+            int centis = (int)((seconds - sec) * 100f);
+            return $"{minutes:00}:{sec:00}.{centis:00}";
         }
 
         private void SetState(GameState newState)

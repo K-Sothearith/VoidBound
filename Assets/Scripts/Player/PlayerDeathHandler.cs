@@ -70,6 +70,26 @@ namespace Voidbound.Player
             }
         }
 
+        private void OnTriggerEnter(Collider other)
+        {
+            var hazard = other.GetComponent<Voidbound.Obstacles.Hazard>();
+            if (hazard == null) hazard = other.GetComponentInParent<Voidbound.Obstacles.Hazard>();
+            if (hazard != null)
+            {
+                HandleDeath(hazard.HazardName);
+            }
+        }
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            var hazard = hit.collider.GetComponent<Voidbound.Obstacles.Hazard>();
+            if (hazard == null) hazard = hit.collider.GetComponentInParent<Voidbound.Obstacles.Hazard>();
+            if (hazard != null)
+            {
+                HandleDeath(hazard.HazardName);
+            }
+        }
+
         private void OnRespawnRequested(Vector3 position, Quaternion rotation)
         {
             isDead = false;

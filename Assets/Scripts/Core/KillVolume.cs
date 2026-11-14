@@ -21,15 +21,20 @@ namespace Voidbound.Core
 
         private void OnTriggerEnter(Collider other)
         {
-            var deathHandler = other.GetComponent<Voidbound.Player.PlayerDeathHandler>();
+            TriggerKill(other.gameObject);
+        }
+
+        public void TriggerKill(GameObject target)
+        {
+            var deathHandler = target.GetComponent<Voidbound.Player.PlayerDeathHandler>();
             if (deathHandler != null)
             {
                 deathHandler.HandleDeath(causeOfDeath);
                 return;
             }
 
-            var player = other.GetComponent<Voidbound.Player.PlayerController>();
-            if (player != null || other.CompareTag("Player"))
+            var player = target.GetComponent<Voidbound.Player.PlayerController>();
+            if (player != null || target.CompareTag("Player"))
             {
                 if (GameManager.Instance != null)
                 {
