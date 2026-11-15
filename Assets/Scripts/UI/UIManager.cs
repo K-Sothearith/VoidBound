@@ -10,19 +10,34 @@ namespace Voidbound.UI
 {
     public class UIManager : MonoBehaviour
     {
-        public static UIManager Instance { get; private set; }
+        private static UIManager instance;
+        public static UIManager Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = FindFirstObjectByType<UIManager>();
+                }
+                return instance;
+            }
+            private set => instance = value;
+        }
 
         [Header("Menu Panels")]
         [SerializeField] private GameObject startMenuPanel;
         [SerializeField] private GameObject hudPanel;
         [SerializeField] private GameObject pauseMenuPanel;
         [SerializeField] private GameObject gameOverPanel;
+        [SerializeField] private GameObject victoryPanel;
 
         [Header("Buttons")]
         [SerializeField] private Button startButton;
         [SerializeField] private Button resumeButton;
         [SerializeField] private Button pauseRestartButton;
         [SerializeField] private Button gameOverRestartButton;
+        [SerializeField] private Button victoryRestartButton;
+        [SerializeField] private Button victoryQuitButton;
 
         [Header("HUD Elements")]
         [SerializeField] private Image crosshairImage;
@@ -33,11 +48,27 @@ namespace Voidbound.UI
         [SerializeField] private Text controlsTutorialText;
         [SerializeField] private Text notificationText;
 
+        [Header("Victory Screen Elements")]
+        [SerializeField] private Text victoryTitleText;
+        [SerializeField] private Text victoryTimeText;
+        [SerializeField] private Text victoryDeathsText;
+
         [Header("Post-Processing Blur Reference")]
         [SerializeField] private Volume postProcessVolume;
 
         private DepthOfField depthOfField;
         private Coroutine notificationCoroutine;
+
+        public GameObject StartMenuPanel => startMenuPanel;
+        public GameObject HudPanel => hudPanel;
+        public GameObject PauseMenuPanel => pauseMenuPanel;
+        public GameObject GameOverPanel => gameOverPanel;
+        public GameObject VictoryPanel => victoryPanel;
+        public Button VictoryRestartButton => victoryRestartButton;
+        public Button VictoryQuitButton => victoryQuitButton;
+        public Text VictoryTitleText => victoryTitleText;
+        public Text VictoryTimeText => victoryTimeText;
+        public Text VictoryDeathsText => victoryDeathsText;
 
         private void Awake()
         {
@@ -144,6 +175,26 @@ namespace Voidbound.UI
                     if (GameManager.Instance != null) GameManager.Instance.RestartGame();
                 });
             }
+
+            if (victoryRestartButton != null)
+            {
+                victoryRestartButton.onClick.AddListener(() =>
+                {
+                    if (GameManager.Instance != null) GameManager.Instance.RestartGame();
+                });
+            }
+
+            if (victoryQuitButton != null)
+            {
+                victoryQuitButton.onClick.AddListener(() =>
+                {
+#if UNITY_EDITOR
+                    UnityEditor.EditorApplication.isPlaying = false;
+#else
+                    Application.Quit();
+#endif
+                });
+            }
         }
 
         public void HandleGameStateChanged(GameState state)
@@ -152,6 +203,20 @@ namespace Voidbound.UI
             if (hudPanel != null) hudPanel.SetActive(state == GameState.Playing);
             if (pauseMenuPanel != null) pauseMenuPanel.SetActive(state == GameState.Paused);
             if (gameOverPanel != null) gameOverPanel.SetActive(state == GameState.GameOver);
+            if (victoryPanel != null) victoryPanel.SetActive(state == GameState.Victory);
+
+            if (state == GameState.Victory)
+            {
+                if (victoryTitleText != null) victoryTitleText.text = "EXTRACTION SUCCESSFUL";
+                if (victoryTimeText != null && GameManager.Instance != null)
+                {
+                    victoryTimeText.text = $"COMPLETION TIME: {GameManager.FormatTime(GameManager.Instance.ElapsedTime)}";
+                }
+                if (victoryDeathsText != null && GameManager.Instance != null)
+                {
+                    victoryDeathsText.text = $"DEATHS: {GameManager.Instance.DeathCount}";
+                }
+            }
 
             // Toggle background depth of field blur for Start Menu
             if (depthOfField != null)

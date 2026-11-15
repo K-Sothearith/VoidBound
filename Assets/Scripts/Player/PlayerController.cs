@@ -367,6 +367,7 @@ namespace Voidbound.Player
             }
             else
             {
+                isInputEnabled = false;
                 velocity = Vector3.zero;
                 knockbackVelocity = Vector3.zero;
             }

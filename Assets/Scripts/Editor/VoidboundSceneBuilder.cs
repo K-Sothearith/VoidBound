@@ -269,6 +269,72 @@ namespace Voidbound.Editor
             Debug.Log("[VoidboundSceneBuilder] Phase 05 integration complete and scene saved!");
         }
 
+        [MenuItem("Voidbound/Build Phase 06 Scene (Final Gauntlet & Extraction Portal)")]
+        public static void BuildPhase06Scene()
+        {
+            Debug.Log("[VoidboundSceneBuilder] Integrating Phase 06 (Section 7 Final Gauntlet & Extraction Portal) into Voidbound scene...");
+
+            EnsureDirectories();
+            Material stoneMat = GetOrCreateMaterial("M_Stone_Platform", new Color(0.38f, 0.42f, 0.48f), 0.2f);
+            Material neonMat = GetOrCreateMaterial("M_Neon_Cyan", new Color(0.1f, 0.9f, 1f), 0.8f, true, new Color(0.1f, 0.9f, 1f) * 2.5f);
+            Material darkTrimMat = GetOrCreateMaterial("M_Dark_Trim", new Color(0.20f, 0.24f, 0.30f), 0.4f);
+            Material laserBeamActiveMat = GetOrCreateMaterial("M_Laser_Beam_Active", new Color(1.0f, 0.12f, 0.12f, 1f), 0.9f, true, new Color(1.0f, 0.1f, 0.1f) * 3.5f);
+            Material laserBeamWarningMat = GetOrCreateMaterial("M_Laser_Beam_Warning", new Color(1.0f, 0.65f, 0.1f, 0.7f), 0.8f, true, new Color(1.0f, 0.6f, 0.05f) * 1.8f);
+            Material laserEmitterMat = GetOrCreateMaterial("M_Laser_Emitter", new Color(0.18f, 0.20f, 0.25f), 0.5f, true, new Color(0.1f, 0.9f, 1f) * 0.8f);
+            Material collapsingMat = GetOrCreateMaterial("M_Platform_Collapsing", new Color(0.28f, 0.32f, 0.38f), 0.4f, true, new Color(0.15f, 0.4f, 0.6f) * 0.5f);
+            Material warnAmberMat = GetOrCreateMaterial("M_Warning_Amber", new Color(1.0f, 0.55f, 0.1f), 0.8f, true, new Color(1.0f, 0.5f, 0.05f) * 2.5f);
+            Material portalEnergyMat = GetOrCreateMaterial("M_Portal_Energy", new Color(0.2f, 0.9f, 1.0f), 0.9f, true, new Color(0.3f, 0.85f, 1.0f) * 3.5f);
+
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                Debug.LogError($"[VoidboundSceneBuilder] Could not open scene at {ScenePath}!");
+                return;
+            }
+
+            GameObject envRoot = GameObject.Find("Environment");
+            if (envRoot == null)
+            {
+                Debug.LogError("[VoidboundSceneBuilder] 'Environment' root not found in scene!");
+                return;
+            }
+
+            // Clean up existing Section 7 if present for clean idempotent rebuild
+            Transform existingSec7 = envRoot.transform.Find("Section_07_FinalGauntlet");
+            if (existingSec7 != null)
+            {
+                Object.DestroyImmediate(existingSec7.gameObject);
+            }
+
+            // Build Section 7
+            CreateSection07FinalGauntlet(envRoot.transform, stoneMat, neonMat, darkTrimMat, laserBeamActiveMat, laserBeamWarningMat, laserEmitterMat, collapsingMat, warnAmberMat, portalEnergyMat);
+
+            // Ensure Victory UI Panel on Canvas
+            GameObject canvasObj = GameObject.Find("Canvas");
+            if (canvasObj != null)
+            {
+                EnsureVictoryUI(canvasObj);
+            }
+
+            // Expand Kill Volume Pit to cover all sections through Section 7 (length = 650m, center Z = 180m => Z from -145m to +505m)
+            GameObject kvObj = GameObject.Find("KillVolume_Pit");
+            if (kvObj != null)
+            {
+                BoxCollider bc = kvObj.GetComponent<BoxCollider>();
+                if (bc != null)
+                {
+                    bc.size = new Vector3(200f, 4f, 650f);
+                    kvObj.transform.position = new Vector3(0f, -12f, 180f);
+                }
+            }
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            UpdateBuildSettings();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[VoidboundSceneBuilder] Phase 06 integration complete and scene saved!");
+        }
+
         public static void BuildScene(bool includePhase02)
         {
             Debug.Log($"[VoidboundSceneBuilder] Starting Scene Generation (Include Phase 02: {includePhase02})...");
@@ -1325,6 +1391,306 @@ namespace Voidbound.Editor
             CreateGatewayArch(sec6Root.transform, new Vector3(0f, 0f, 273.5f), stoneMat, neonMat);
         }
 
+        private static void CreateSection07FinalGauntlet(Transform parent, Material stoneMat, Material neonMat,
+            Material darkTrimMat, Material laserActiveMat, Material laserWarnMat, Material laserEmitterMat,
+            Material collapsingMat, Material warnAmberMat, Material portalEnergyMat)
+        {
+            GameObject sec7Root = new GameObject("Section_07_FinalGauntlet");
+            sec7Root.transform.SetParent(parent);
+
+            // 1. Entrance Trigger at Z = 274.5
+            GameObject triggerObj = new GameObject("Section_07_Entrance_Trigger");
+            triggerObj.transform.SetParent(sec7Root.transform);
+            triggerObj.transform.position = new Vector3(0f, 1.5f, 274.5f);
+            BoxCollider triggerCol = triggerObj.AddComponent<BoxCollider>();
+            triggerCol.isTrigger = true;
+            triggerCol.size = new Vector3(8f, 3.5f, 1.5f);
+            SectionTrigger secTrigger = triggerObj.AddComponent<SectionTrigger>();
+            SerializedObject soSecTrigger = new SerializedObject(secTrigger);
+            soSecTrigger.FindProperty("sectionName").stringValue = "Section 7: Final Gauntlet";
+            soSecTrigger.ApplyModifiedProperties();
+
+            // 2. Platform 17A: Entrance Apron (8 x 1 x 6, Z: 274 to 280, center Z = 277)
+            CreateWalkwayPlatform(sec7Root.transform, "Platform_17A_GauntletEntrance", new Vector3(0f, -0.5f, 277f), new Vector3(8f, 1f, 6f), stoneMat, darkTrimMat, neonMat);
+            CreatePillar(sec7Root.transform, new Vector3(-3.8f, 1.5f, 276f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(3.8f, 1.5f, 276f), stoneMat, darkTrimMat);
+
+            // 3. Challenge 1: Laser Corridor (Platform 17B, 5 x 1 x 24, Z: 280 to 304, center Z = 292)
+            GameObject c1Plat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            c1Plat.name = "Platform_17B_LaserRunway";
+            c1Plat.transform.SetParent(sec7Root.transform);
+            c1Plat.transform.position = new Vector3(0f, -0.5f, 292f);
+            c1Plat.transform.localScale = new Vector3(5f, 1f, 24f);
+            c1Plat.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            CreateTrim(c1Plat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(c1Plat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(c1Plat.transform, new Vector3(0f, 0.51f, -0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat);
+            CreateTrim(c1Plat.transform, new Vector3(0f, 0.51f, 0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat);
+
+            // Decorative Corridor Pillars & Arches
+            float[] pillarZ = { 283f, 289f, 295f, 301f };
+            for (int i = 0; i < pillarZ.Length; i++)
+            {
+                CreatePillar(sec7Root.transform, new Vector3(-2.6f, 1.5f, pillarZ[i]), stoneMat, darkTrimMat);
+                CreatePillar(sec7Root.transform, new Vector3(2.6f, 1.5f, pillarZ[i]), stoneMat, darkTrimMat);
+            }
+            CreateStoneArch(sec7Root.transform, "Arch_Laser_01", 283f, stoneMat, darkTrimMat, neonMat);
+            CreateStoneArch(sec7Root.transform, "Arch_Laser_02", 301f, stoneMat, darkTrimMat, neonMat);
+
+            // Challenge 1 Timed Lasers with clear telegraphing & safe intervals
+            CreateLaserHazard(sec7Root.transform, "Laser_Gauntlet_01", 286.0f, 0.9f, 2.0f, 0.8f, 1.6f, 0.0f, LaserState.Inactive, laserActiveMat, laserWarnMat, laserEmitterMat);
+            CreateLaserHazard(sec7Root.transform, "Laser_Gauntlet_02", 292.0f, 0.9f, 2.0f, 0.8f, 1.6f, 1.5f, LaserState.Inactive, laserActiveMat, laserWarnMat, laserEmitterMat);
+            CreateLaserHazard(sec7Root.transform, "Laser_Gauntlet_03", 298.0f, 0.9f, 2.0f, 0.8f, 1.6f, 3.0f, LaserState.Inactive, laserActiveMat, laserWarnMat, laserEmitterMat);
+
+            // 4. Safe Haven 1 (Platform 18: 8 x 1 x 6, Z: 304 to 310, center Z = 307)
+            CreateWalkwayPlatform(sec7Root.transform, "Platform_18_RestHaven1", new Vector3(0f, -0.5f, 307f), new Vector3(8f, 1f, 6f), stoneMat, darkTrimMat, neonMat);
+            CreatePillar(sec7Root.transform, new Vector3(-3.8f, 1.5f, 306f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(3.8f, 1.5f, 306f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(-3.8f, 1.5f, 309f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(3.8f, 1.5f, 309f), stoneMat, darkTrimMat);
+            CreateGatewayArch(sec7Root.transform, new Vector3(0f, 0f, 309.5f), stoneMat, neonMat);
+
+            // 5. Challenge 2: Three Autonomously Oscillating Moving Platforms above the Void (Z: 310 to 340)
+            CreateAutonomousMovingPlatform(sec7Root.transform, "MovingPlatform_01",
+                new Vector3(-3.5f, -0.5f, 315.0f), new Vector3(3.5f, -0.5f, 315.0f),
+                new Vector3(4.0f, 0.8f, 4.0f), 4.5f, 0.6f, stoneMat, neonMat);
+
+            CreateAutonomousMovingPlatform(sec7Root.transform, "MovingPlatform_02",
+                new Vector3(0.0f, -0.5f, 322.0f), new Vector3(0.0f, -0.5f, 328.0f),
+                new Vector3(4.0f, 0.8f, 4.0f), 5.0f, 0.6f, stoneMat, neonMat);
+
+            CreateAutonomousMovingPlatform(sec7Root.transform, "MovingPlatform_03",
+                new Vector3(3.5f, -0.5f, 335.0f), new Vector3(-3.5f, -0.5f, 335.0f),
+                new Vector3(4.0f, 0.8f, 4.0f), 4.5f, 0.6f, stoneMat, neonMat);
+
+            // 6. Safe Haven 2 (Platform 19: 8 x 1 x 6, Z: 340 to 346, center Z = 343)
+            CreateWalkwayPlatform(sec7Root.transform, "Platform_19_RestHaven2", new Vector3(0f, -0.5f, 343f), new Vector3(8f, 1f, 6f), stoneMat, darkTrimMat, neonMat);
+            CreatePillar(sec7Root.transform, new Vector3(-3.8f, 1.5f, 342f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(3.8f, 1.5f, 342f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(-3.8f, 1.5f, 345f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(3.8f, 1.5f, 345f), stoneMat, darkTrimMat);
+            CreateGatewayArch(sec7Root.transform, new Vector3(0f, 0f, 345.5f), stoneMat, neonMat);
+
+            // 7. Challenge 3: Collapsing Platforms above the Void (Z: 346 to 372)
+            Vector3 colScale = new Vector3(3.2f, 0.8f, 3.2f);
+            CreateCollapsingPlatform(sec7Root.transform, "CollapsingPlatform_01", new Vector3(-2.0f, -0.5f, 351.0f), colScale, collapsingMat, warnAmberMat, neonMat, 0.8f, 16.0f);
+            CreateCollapsingPlatform(sec7Root.transform, "CollapsingPlatform_02", new Vector3(2.0f, -0.5f, 357.5f), colScale, collapsingMat, warnAmberMat, neonMat, 0.8f, 16.0f);
+            CreateCollapsingPlatform(sec7Root.transform, "CollapsingPlatform_03", new Vector3(-1.5f, -0.5f, 364.0f), colScale, collapsingMat, warnAmberMat, neonMat, 0.8f, 16.0f);
+            CreateCollapsingPlatform(sec7Root.transform, "CollapsingPlatform_04", new Vector3(0.0f, -0.5f, 370.0f), colScale, collapsingMat, warnAmberMat, neonMat, 0.8f, 16.0f);
+
+            // 8. Extraction Sanctuary (Platform 20: 12 x 1 x 14, Z: 373 to 387, center Z = 380)
+            CreateWalkwayPlatform(sec7Root.transform, "Platform_20_ExtractionSanctuary", new Vector3(0f, -0.5f, 380f), new Vector3(12f, 1f, 14f), stoneMat, darkTrimMat, neonMat);
+            CreatePillar(sec7Root.transform, new Vector3(-5.5f, 2.0f, 375f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(5.5f, 2.0f, 375f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(-5.5f, 2.0f, 380f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(5.5f, 2.0f, 380f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(-5.5f, 2.0f, 385f), stoneMat, darkTrimMat);
+            CreatePillar(sec7Root.transform, new Vector3(5.5f, 2.0f, 385f), stoneMat, darkTrimMat);
+
+            // Atmospheric Cyan Sanctuary Lights
+            CreatePointLight(sec7Root.transform, "SanctuaryLight_Left", new Vector3(-4.0f, 4.0f, 380f), new Color(0.2f, 0.85f, 1f), 10f, 1.8f);
+            CreatePointLight(sec7Root.transform, "SanctuaryLight_Right", new Vector3(4.0f, 4.0f, 380f), new Color(0.2f, 0.85f, 1f), 10f, 1.8f);
+
+            // 9. Extraction Portal at Z = 383.0
+            CreateExtractionPortal(sec7Root.transform, new Vector3(0f, 0f, 383.0f), stoneMat, darkTrimMat, neonMat, portalEnergyMat);
+        }
+
+        private static GameObject CreateAutonomousMovingPlatform(Transform parent, string name, Vector3 pointA, Vector3 pointB,
+            Vector3 scale, float speed, float pauseDuration, Material stoneMat, Material neonMat)
+        {
+            GameObject platObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            platObj.name = name;
+            platObj.transform.SetParent(parent);
+            platObj.transform.position = pointA;
+            platObj.transform.localScale = scale;
+            platObj.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            // Neon perimeter edge strips on moving platform
+            CreateTrim(platObj.transform, new Vector3(0f, 0.51f, 0.48f), new Vector3(0.96f, 0.02f, 0.04f), neonMat);
+            CreateTrim(platObj.transform, new Vector3(0f, 0.51f, -0.48f), new Vector3(0.96f, 0.02f, 0.04f), neonMat);
+            CreateTrim(platObj.transform, new Vector3(-0.48f, 0.51f, 0f), new Vector3(0.04f, 0.02f, 0.96f), neonMat);
+            CreateTrim(platObj.transform, new Vector3(0.48f, 0.51f, 0f), new Vector3(0.04f, 0.02f, 0.96f), neonMat);
+
+            // Underside glow light
+            GameObject platLightObj = new GameObject("PlatformLight");
+            platLightObj.transform.SetParent(platObj.transform);
+            platLightObj.transform.localPosition = new Vector3(0f, -0.3f, 0f);
+            Light platLight = platLightObj.AddComponent<Light>();
+            platLight.type = LightType.Point;
+            platLight.color = neonMat.color;
+            platLight.range = 6.0f;
+            platLight.intensity = 1.8f;
+
+            // Rigidbody
+            Rigidbody platRb = platObj.AddComponent<Rigidbody>();
+            platRb.isKinematic = true;
+            platRb.interpolation = RigidbodyInterpolation.None;
+            platRb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+            // Rider detector child trigger
+            GameObject detectorObj = new GameObject("RiderDetector");
+            detectorObj.transform.SetParent(platObj.transform);
+            detectorObj.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+            detectorObj.transform.localScale = Vector3.one;
+            BoxCollider detCol = detectorObj.AddComponent<BoxCollider>();
+            detCol.isTrigger = true;
+            detCol.center = new Vector3(0f, 1.25f, 0f);
+            detCol.size = new Vector3(0.99f, 2.5f, 0.99f);
+
+            PlatformRiderDetector detectorComp = detectorObj.AddComponent<PlatformRiderDetector>();
+
+            MovingPlatform platComp = platObj.AddComponent<MovingPlatform>();
+            detectorComp.Initialize(platComp);
+
+            SerializedObject soMovingPlat = new SerializedObject(platComp);
+            soMovingPlat.FindProperty("pointA").vector3Value = pointA;
+            soMovingPlat.FindProperty("pointB").vector3Value = pointB;
+            soMovingPlat.FindProperty("moveSpeed").floatValue = speed;
+            soMovingPlat.FindProperty("pauseDuration").floatValue = pauseDuration;
+            soMovingPlat.FindProperty("autoOscillate").boolValue = true;
+            soMovingPlat.ApplyModifiedProperties();
+
+            return platObj;
+        }
+
+        private static GameObject CreateCollapsingPlatform(Transform parent, string name, Vector3 pos, Vector3 scale,
+            Material normalMat, Material warningMat, Material trimMat, float warnDur = 0.8f, float fallSpeed = 16f)
+        {
+            GameObject platObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            platObj.name = name;
+            platObj.transform.SetParent(parent);
+            platObj.transform.position = pos;
+            platObj.transform.localScale = scale;
+            Renderer rend = platObj.GetComponent<Renderer>();
+            rend.sharedMaterial = normalMat;
+
+            // Decorative edge trims
+            CreateTrim(platObj.transform, new Vector3(0f, 0.51f, 0.48f), new Vector3(0.96f, 0.02f, 0.04f), trimMat);
+            CreateTrim(platObj.transform, new Vector3(0f, 0.51f, -0.48f), new Vector3(0.96f, 0.02f, 0.04f), trimMat);
+            CreateTrim(platObj.transform, new Vector3(-0.48f, 0.51f, 0f), new Vector3(0.04f, 0.02f, 0.96f), trimMat);
+            CreateTrim(platObj.transform, new Vector3(0.48f, 0.51f, 0f), new Vector3(0.04f, 0.02f, 0.96f), trimMat);
+
+            // Primitive already has solid BoxCollider
+            BoxCollider solidCol = platObj.GetComponent<BoxCollider>();
+
+            // Add trigger BoxCollider slightly raised above platform surface to detect footsteps
+            BoxCollider trigCol = platObj.AddComponent<BoxCollider>();
+            trigCol.isTrigger = true;
+            trigCol.center = new Vector3(0f, 0.6f, 0f);
+            trigCol.size = new Vector3(0.96f, 0.35f, 0.96f);
+
+            CollapsingPlatform cpComp = platObj.AddComponent<CollapsingPlatform>();
+            SerializedObject so = new SerializedObject(cpComp);
+            so.FindProperty("solidCollider").objectReferenceValue = solidCol;
+            so.FindProperty("platformRenderer").objectReferenceValue = rend;
+            so.FindProperty("normalMaterial").objectReferenceValue = normalMat;
+            so.FindProperty("warningMaterial").objectReferenceValue = warningMat;
+            so.FindProperty("warnDuration").floatValue = warnDur;
+            so.FindProperty("fallSpeed").floatValue = fallSpeed;
+            so.FindProperty("shakeIntensity").floatValue = 0.05f;
+            so.ApplyModifiedProperties();
+
+            return platObj;
+        }
+
+        private static GameObject CreateExtractionPortal(Transform parent, Vector3 pos, Material stoneMat, Material darkTrimMat, Material neonMat, Material portalEnergyMat)
+        {
+            GameObject portalRoot = new GameObject("ExtractionPortal");
+            portalRoot.transform.SetParent(parent);
+            portalRoot.transform.position = pos;
+
+            // 1. Base Dais (Circular step)
+            GameObject dais = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            dais.name = "PortalDais";
+            dais.transform.SetParent(portalRoot.transform);
+            dais.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            dais.transform.localScale = new Vector3(6.0f, 0.15f, 6.0f);
+            dais.GetComponent<Renderer>().sharedMaterial = stoneMat;
+            Object.DestroyImmediate(dais.GetComponent<Collider>());
+
+            // Ring trim on dais
+            GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            ring.name = "DaisRuneRing";
+            ring.transform.SetParent(portalRoot.transform);
+            ring.transform.localPosition = new Vector3(0f, 0.31f, 0f);
+            ring.transform.localScale = new Vector3(5.2f, 0.02f, 5.2f);
+            ring.GetComponent<Renderer>().sharedMaterial = neonMat;
+            Object.DestroyImmediate(ring.GetComponent<Collider>());
+
+            // 2. Gateway Arch
+            GameObject pillarLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pillarLeft.name = "ArchPillar_Left";
+            pillarLeft.transform.SetParent(portalRoot.transform);
+            pillarLeft.transform.localPosition = new Vector3(-2.8f, 3.5f, 0f);
+            pillarLeft.transform.localScale = new Vector3(0.9f, 7.0f, 0.9f);
+            pillarLeft.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+            GameObject pillarRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pillarRight.name = "ArchPillar_Right";
+            pillarRight.transform.SetParent(portalRoot.transform);
+            pillarRight.transform.localPosition = new Vector3(2.8f, 3.5f, 0f);
+            pillarRight.transform.localScale = new Vector3(0.9f, 7.0f, 0.9f);
+            pillarRight.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+            GameObject lintel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            lintel.name = "ArchLintel";
+            lintel.transform.SetParent(portalRoot.transform);
+            lintel.transform.localPosition = new Vector3(0f, 7.2f, 0f);
+            lintel.transform.localScale = new Vector3(6.5f, 0.8f, 1.1f);
+            lintel.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+            // Neon trims on arch
+            CreateTrim(pillarLeft.transform, new Vector3(0.51f, 0f, 0f), new Vector3(0.04f, 0.98f, 0.1f), neonMat);
+            CreateTrim(pillarRight.transform, new Vector3(-0.51f, 0f, 0f), new Vector3(0.04f, 0.98f, 0.1f), neonMat);
+            CreateTrim(lintel.transform, new Vector3(0f, -0.51f, 0f), new Vector3(0.98f, 0.04f, 0.1f), neonMat);
+
+            // 3. Swirling Portal Energy Core
+            GameObject coreObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            coreObj.name = "PortalEnergyCore";
+            coreObj.transform.SetParent(portalRoot.transform);
+            coreObj.transform.localPosition = new Vector3(0f, 3.5f, 0f);
+            coreObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            coreObj.transform.localScale = new Vector3(4.2f, 0.08f, 4.2f);
+            coreObj.GetComponent<Renderer>().sharedMaterial = portalEnergyMat;
+            Object.DestroyImmediate(coreObj.GetComponent<Collider>());
+
+            // Inner Accent Ring
+            GameObject innerRing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            innerRing.name = "InnerAccentRing";
+            innerRing.transform.SetParent(coreObj.transform);
+            innerRing.transform.localPosition = new Vector3(0f, 1.1f, 0f);
+            innerRing.transform.localRotation = Quaternion.identity;
+            innerRing.transform.localScale = new Vector3(0.6f, 0.8f, 0.6f);
+            innerRing.GetComponent<Renderer>().sharedMaterial = neonMat;
+            Object.DestroyImmediate(innerRing.GetComponent<Collider>());
+
+            // 4. Portal Light
+            GameObject lightObj = new GameObject("PortalLight");
+            lightObj.transform.SetParent(portalRoot.transform);
+            lightObj.transform.localPosition = new Vector3(0f, 3.5f, 0f);
+            Light pLight = lightObj.AddComponent<Light>();
+            pLight.type = LightType.Point;
+            pLight.color = new Color(0.2f, 0.85f, 1.0f);
+            pLight.range = 12.0f;
+            pLight.intensity = 3.5f;
+
+            // 5. Trigger BoxCollider spanning portal opening
+            BoxCollider trigCol = portalRoot.AddComponent<BoxCollider>();
+            trigCol.isTrigger = true;
+            trigCol.center = new Vector3(0f, 3.5f, 0f);
+            trigCol.size = new Vector3(4.5f, 6.0f, 2.0f);
+
+            // 6. ExtractionPortal Component
+            ExtractionPortal portalComp = portalRoot.AddComponent<ExtractionPortal>();
+            SerializedObject so = new SerializedObject(portalComp);
+            so.FindProperty("portalCore").objectReferenceValue = coreObj.transform;
+            so.FindProperty("portalLight").objectReferenceValue = pLight;
+            so.ApplyModifiedProperties();
+
+            return portalRoot;
+        }
+
         private static GameObject CreatePushableCrate(Transform parent, string name, Vector3 pos, Vector3 size, Material crateMat, Material accentMat)
         {
             GameObject crateObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -2270,6 +2636,14 @@ namespace Voidbound.Editor
             CreateText(gameOverMenu.transform, "GameOverSubtitle", "All Lives Consumed. Course Integrity Reset.", defaultFont, 22, FontStyle.Normal, new Color(0.9f, 0.7f, 0.7f), new Vector2(0, 50), new Vector2(600, 40));
             GameObject goRestartBtnObj = CreateButton(gameOverMenu.transform, "GameOverRestartButton", "TRY AGAIN", defaultFont, new Vector2(0, -50), new Vector2(280, 55), new Color(0.8f, 0.25f, 0.25f));
 
+            // Panel: Victory Menu
+            GameObject victoryMenu = CreatePanel(canvasObj.transform, "VictoryPanel", new Color(0.02f, 0.08f, 0.14f, 0.94f), false);
+            Text vicTitle = CreateText(victoryMenu.transform, "VictoryTitle", "EXTRACTION SUCCESSFUL", defaultFont, 56, FontStyle.Bold, new Color(0.3f, 1f, 0.85f), new Vector2(0, 140), new Vector2(900, 80));
+            Text vicTimeText = CreateText(victoryMenu.transform, "VictoryTimeText", "COMPLETION TIME: 00:00.00", defaultFont, 24, FontStyle.Bold, new Color(0.8f, 0.95f, 1f), new Vector2(0, 60), new Vector2(600, 40));
+            Text vicDeathsText = CreateText(victoryMenu.transform, "VictoryDeathsText", "DEATHS: 0", defaultFont, 24, FontStyle.Bold, new Color(1f, 0.6f, 0.6f), new Vector2(0, 15), new Vector2(600, 40));
+            GameObject vicRestartBtnObj = CreateButton(victoryMenu.transform, "VictoryRestartButton", "RESTART GAME", defaultFont, new Vector2(0, -50), new Vector2(300, 55), new Color(0.1f, 0.6f, 0.5f));
+            GameObject vicQuitBtnObj = CreateButton(victoryMenu.transform, "VictoryQuitButton", "QUIT GAME", defaultFont, new Vector2(0, -120), new Vector2(300, 55), new Color(0.5f, 0.2f, 0.25f));
+
             // Hook up UIManager
             UIManager ui = canvasObj.AddComponent<UIManager>();
             SerializedObject so = new SerializedObject(ui);
@@ -2277,11 +2651,14 @@ namespace Voidbound.Editor
             so.FindProperty("hudPanel").objectReferenceValue = hud;
             so.FindProperty("pauseMenuPanel").objectReferenceValue = pauseMenu;
             so.FindProperty("gameOverPanel").objectReferenceValue = gameOverMenu;
+            so.FindProperty("victoryPanel").objectReferenceValue = victoryMenu;
 
             so.FindProperty("startButton").objectReferenceValue = startBtn;
             so.FindProperty("resumeButton").objectReferenceValue = resumeBtnObj.GetComponent<Button>();
             so.FindProperty("pauseRestartButton").objectReferenceValue = pauseRestartBtnObj.GetComponent<Button>();
             so.FindProperty("gameOverRestartButton").objectReferenceValue = goRestartBtnObj.GetComponent<Button>();
+            so.FindProperty("victoryRestartButton").objectReferenceValue = vicRestartBtnObj.GetComponent<Button>();
+            so.FindProperty("victoryQuitButton").objectReferenceValue = vicQuitBtnObj.GetComponent<Button>();
 
             so.FindProperty("crosshairImage").objectReferenceValue = chImg;
             so.FindProperty("interactionPromptText").objectReferenceValue = promptText;
@@ -2291,8 +2668,44 @@ namespace Voidbound.Editor
             so.FindProperty("controlsTutorialText").objectReferenceValue = hintsText;
             so.FindProperty("notificationText").objectReferenceValue = notifText;
 
+            so.FindProperty("victoryTitleText").objectReferenceValue = vicTitle;
+            so.FindProperty("victoryTimeText").objectReferenceValue = vicTimeText;
+            so.FindProperty("victoryDeathsText").objectReferenceValue = vicDeathsText;
+
             so.FindProperty("postProcessVolume").objectReferenceValue = volume;
             so.ApplyModifiedProperties();
+        }
+
+        private static void EnsureVictoryUI(GameObject canvasObj)
+        {
+            Transform vicTr = canvasObj.transform.Find("VictoryPanel");
+            Font defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (defaultFont == null) defaultFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+            if (vicTr != null)
+            {
+                Object.DestroyImmediate(vicTr.gameObject);
+            }
+
+            GameObject victoryMenu = CreatePanel(canvasObj.transform, "VictoryPanel", new Color(0.02f, 0.08f, 0.14f, 0.94f), false);
+            Text vicTitle = CreateText(victoryMenu.transform, "VictoryTitle", "EXTRACTION SUCCESSFUL", defaultFont, 56, FontStyle.Bold, new Color(0.3f, 1f, 0.85f), new Vector2(0, 140), new Vector2(900, 80));
+            Text vicTimeText = CreateText(victoryMenu.transform, "VictoryTimeText", "COMPLETION TIME: 00:00.00", defaultFont, 24, FontStyle.Bold, new Color(0.8f, 0.95f, 1f), new Vector2(0, 60), new Vector2(600, 40));
+            Text vicDeathsText = CreateText(victoryMenu.transform, "VictoryDeathsText", "DEATHS: 0", defaultFont, 24, FontStyle.Bold, new Color(1f, 0.6f, 0.6f), new Vector2(0, 15), new Vector2(600, 40));
+            GameObject vicRestartBtnObj = CreateButton(victoryMenu.transform, "VictoryRestartButton", "RESTART GAME", defaultFont, new Vector2(0, -50), new Vector2(300, 55), new Color(0.1f, 0.6f, 0.5f));
+            GameObject vicQuitBtnObj = CreateButton(victoryMenu.transform, "VictoryQuitButton", "QUIT GAME", defaultFont, new Vector2(0, -120), new Vector2(300, 55), new Color(0.5f, 0.2f, 0.25f));
+
+            UIManager ui = canvasObj.GetComponent<UIManager>();
+            if (ui != null)
+            {
+                SerializedObject so = new SerializedObject(ui);
+                so.FindProperty("victoryPanel").objectReferenceValue = victoryMenu;
+                so.FindProperty("victoryRestartButton").objectReferenceValue = vicRestartBtnObj.GetComponent<Button>();
+                so.FindProperty("victoryQuitButton").objectReferenceValue = vicQuitBtnObj.GetComponent<Button>();
+                so.FindProperty("victoryTitleText").objectReferenceValue = vicTitle;
+                so.FindProperty("victoryTimeText").objectReferenceValue = vicTimeText;
+                so.FindProperty("victoryDeathsText").objectReferenceValue = vicDeathsText;
+                so.ApplyModifiedProperties();
+            }
         }
 
         private static GameObject CreatePanel(Transform parent, string name, Color bgColor, bool active)

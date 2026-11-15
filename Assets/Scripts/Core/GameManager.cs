@@ -18,7 +18,19 @@ namespace Voidbound.Core
     /// </summary>
     public class GameManager : MonoBehaviour
     {
-        public static GameManager Instance { get; private set; }
+        private static GameManager instance;
+        public static GameManager Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = FindFirstObjectByType<GameManager>();
+                }
+                return instance;
+            }
+            private set => instance = value;
+        }
 
         [Header("Game Configuration")]
         [SerializeField] private int maxLives = 3;
@@ -40,6 +52,7 @@ namespace Voidbound.Core
         // Death guard to prevent overlapping deductions
         private bool isRespawning;
         private float respawnCooldownTimer;
+        private int totalDeaths;
 
         // Public Events
         public event Action<GameState> OnGameStateChanged;
@@ -53,6 +66,7 @@ namespace Voidbound.Core
         public GameState CurrentState => currentState;
         public int CurrentLives => currentLives;
         public int MaxLives => maxLives;
+        public int DeathCount => totalDeaths;
         public float ElapsedTime => elapsedTime;
         public string CurrentSectionName => currentSectionName;
         public bool IsPlaying => currentState == GameState.Playing;
@@ -144,6 +158,7 @@ namespace Voidbound.Core
         public void StartGame()
         {
             currentLives = maxLives;
+            totalDeaths = 0;
             elapsedTime = 0f;
             hasCustomCheckpoint = false;
             activeCheckpointPosition = initialSpawnPosition;
@@ -176,6 +191,7 @@ namespace Voidbound.Core
         {
             Time.timeScale = 1.0f;
             currentLives = maxLives;
+            totalDeaths = 0;
             elapsedTime = 0f;
             hasCustomCheckpoint = false;
             activeCheckpointPosition = initialSpawnPosition;
@@ -202,6 +218,7 @@ namespace Voidbound.Core
 
             isRespawning = true;
             respawnCooldownTimer = respawnDelay;
+            totalDeaths++;
 
             currentLives = Mathf.Max(0, currentLives - 1);
             OnLivesChanged?.Invoke(currentLives, maxLives);
@@ -215,6 +232,12 @@ namespace Voidbound.Core
                 ShowNotification($"Vessel Destroyed! {currentLives} {(currentLives == 1 ? "life" : "lives")} remaining.", 2.0f);
                 OnRespawnRequested?.Invoke(activeCheckpointPosition, activeCheckpointRotation);
             }
+        }
+
+        public void ResetRespawnGuard()
+        {
+            isRespawning = false;
+            respawnCooldownTimer = 0f;
         }
 
         public void TriggerGameOver()

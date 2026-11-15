@@ -18,6 +18,12 @@ namespace Voidbound.Interactions
         [Tooltip("Delay in seconds after releasing plate before returning toward Point A")]
         [SerializeField] private float returnDelay = 0.8f;
 
+        [Header("Autonomous Oscillation (Section 7)")]
+        [Tooltip("When enabled, the platform continuously oscillates between Point A and Point B")]
+        [SerializeField] private bool autoOscillate = false;
+        [Tooltip("Pause duration at each endpoint during autonomous oscillation")]
+        [SerializeField] private float pauseDuration = 0.6f;
+
         [Header("Trigger Reference")]
         [SerializeField] private PressurePlate pressurePlate;
 
@@ -29,7 +35,9 @@ namespace Voidbound.Interactions
         private Rigidbody rb;
         private CharacterController currentRider;
         private float currentReturnTimer;
+        private float currentPauseTimer;
         private bool isSummoned;
+        private bool movingTowardsB = true;
         private Vector3 lastPosition;
         private Vector3 frameDelta;
 
@@ -37,6 +45,8 @@ namespace Voidbound.Interactions
         public Vector3 PointB => pointB;
         public float MoveSpeed => moveSpeed;
         public float ReturnDelay => returnDelay;
+        public bool AutoOscillate => autoOscillate;
+        public float PauseDuration => pauseDuration;
         public CharacterController CurrentRider => currentRider;
         public PressurePlate Plate => pressurePlate;
         public bool IsSummoned => isSummoned;
@@ -46,6 +56,10 @@ namespace Voidbound.Interactions
         {
             get
             {
+                if (autoOscillate)
+                {
+                    return movingTowardsB ? pointB : pointA;
+                }
                 if (pressurePlate != null && pressurePlate.IsPressed)
                 {
                     return pointB;
@@ -56,7 +70,7 @@ namespace Voidbound.Interactions
 
         private void Awake()
         {
-            rb = GetComponent<Rigidbody>();
+            if (rb == null) rb = GetComponent<Rigidbody>();
             if (rb != null)
             {
                 rb.isKinematic = true;
@@ -105,35 +119,57 @@ namespace Voidbound.Interactions
         public void Tick(float dt)
         {
             if (dt <= 0f) return;
+            if (rb == null) rb = GetComponent<Rigidbody>();
 
+            Vector3 currentPos = transform.position;
             Vector3 destination;
-            bool plateActive = pressurePlate != null && pressurePlate.IsPressed;
 
-            if (plateActive)
+            if (autoOscillate)
             {
-                // Plate is actively pressed: summon towards departure ledge (Point B)
-                destination = pointB;
-                currentReturnTimer = returnDelay;
-                isSummoned = true;
-            }
-            else
-            {
-                // Plate released: check return delay
-                if (currentReturnTimer > 0f)
+                if (currentPauseTimer > 0f)
                 {
-                    currentReturnTimer -= dt;
-                    // Hold current position during delay
-                    destination = transform.position;
+                    currentPauseTimer -= dt;
+                    destination = currentPos;
                 }
                 else
                 {
-                    destination = pointA;
-                    isSummoned = false;
+                    destination = movingTowardsB ? pointB : pointA;
+                    if (Vector3.Distance(currentPos, destination) <= moveSpeed * dt + 0.001f)
+                    {
+                        movingTowardsB = !movingTowardsB;
+                        currentPauseTimer = pauseDuration;
+                    }
+                }
+            }
+            else
+            {
+                bool plateActive = pressurePlate != null && pressurePlate.IsPressed;
+
+                if (plateActive)
+                {
+                    // Plate is actively pressed: summon towards departure ledge (Point B)
+                    destination = pointB;
+                    currentReturnTimer = returnDelay;
+                    isSummoned = true;
+                }
+                else
+                {
+                    // Plate released: check return delay
+                    if (currentReturnTimer > 0f)
+                    {
+                        currentReturnTimer -= dt;
+                        // Hold current position during delay
+                        destination = currentPos;
+                    }
+                    else
+                    {
+                        destination = pointA;
+                        isSummoned = false;
+                    }
                 }
             }
 
             // Calculate frame movement
-            Vector3 currentPos = transform.position;
             Vector3 nextPos = Vector3.MoveTowards(currentPos, destination, moveSpeed * dt);
             Vector3 delta = nextPos - currentPos;
             frameDelta = delta;
@@ -188,8 +224,11 @@ namespace Voidbound.Interactions
         {
             currentRider = null;
             currentReturnTimer = 0f;
+            currentPauseTimer = 0f;
+            movingTowardsB = true;
             isSummoned = false;
             transform.position = pointA;
+            if (rb == null) rb = GetComponent<Rigidbody>();
             if (rb != null)
             {
                 rb.position = pointA;
@@ -204,7 +243,25 @@ namespace Voidbound.Interactions
             moveSpeed = speed;
             returnDelay = delay;
             pressurePlate = plate;
+            autoOscillate = false;
             transform.position = pointA;
+            if (rb == null) rb = GetComponent<Rigidbody>();
+            if (rb != null) rb.position = pointA;
+            lastPosition = pointA;
+        }
+
+        public void ConfigureAutonomous(Vector3 startPointA, Vector3 endPointB, float speed, float pauseTime = 0.6f)
+        {
+            pointA = startPointA;
+            pointB = endPointB;
+            moveSpeed = speed;
+            pauseDuration = pauseTime;
+            autoOscillate = true;
+            pressurePlate = null;
+            movingTowardsB = true;
+            currentPauseTimer = 0f;
+            transform.position = pointA;
+            if (rb == null) rb = GetComponent<Rigidbody>();
             if (rb != null) rb.position = pointA;
             lastPosition = pointA;
         }

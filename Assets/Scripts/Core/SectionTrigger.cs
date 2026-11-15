@@ -12,6 +12,8 @@ namespace Voidbound.Core
 
         private bool hasTriggered;
 
+        public string SectionName => sectionName;
+
         private void Awake()
         {
             Collider col = GetComponent<Collider>();

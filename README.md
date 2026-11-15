@@ -2,7 +2,7 @@
 
 *A first-person parkour journey through floating ruins in a night-sky void.*
 
-> **Development status:** In progress — Phases 01, 02, 03, 04, and 05 implemented. The complete seven-section course and standalone build are not yet available.
+> **Development status:** In progress — Phases 01, 02, 03, 04, 05, and 06 implemented. The complete seven-section obstacle course and victory flow are fully playable.
 
 ## Overview
 
@@ -45,9 +45,9 @@ There are no other planned checkpoints (exactly two checkpoints total). The elap
 | 4. Spike Path | Navigate spike formations on a narrow bridge | Implemented |
 | 5. Laser Corridor | Time movement around active and inactive lasers | Implemented |
 | 6. Physics Chamber | Push two crates from opposite sides onto two plates to open a door | Implemented |
-| 7. Final Gauntlet | Combine learned obstacles and reach the goal portal | Planned |
+| 7. Final Gauntlet | Traverse timed lasers, moving platforms, and collapsing platforms to reach extraction portal | Implemented |
 
-The temporary prototype finish marker from Phase 01 has been removed from the playable scene in Phase 03 cleanup; victory will be awarded by the extraction portal at the end of Section 7.
+The temporary prototype finish marker from Phase 01 has been removed from the playable scene in Phase 03 cleanup; victory is awarded by entering the animated Extraction Portal at the end of Section 7.
 
 ## Current implementation
 
@@ -61,7 +61,9 @@ The temporary prototype finish marker from Phase 01 has been removed from the pl
 
 **Phase 05 — Physics Chamber & Checkpoint 2:** Relocated Checkpoint 1 from Section 3 entrance to Section 4 entrance (approximately Z=107.5m) to maintain exactly two checkpoints total; placed Checkpoint 2 at Section 6 entrance (Z=228.0m); implemented Section 6 Physics Chamber featuring two pushable dynamic Rigidbody crates (tuned at 25kg mass, linear damping 4.0, angular damping 5.0, rotation X/Z constraints to eliminate tumbling), two crate-detecting pressure plates with depression animation and emissive feedback, and a locked sci-fi exit portal featuring dual sliding blast doors that unlock only when both plates are simultaneously active; integrated lost crate anti-softlock systems via automatic void fall recovery and an interactive `CrateResetTerminal` (E-key interactable); enhanced `PlayerController` to push dynamic physics objects via `OnControllerColliderHit`; extended kill volume pit coverage through Section 6 (length 550m); 65 automated test assertions passing in `VoidboundPhase05Tests.cs` and 65 regression test assertions passing in `VoidboundPhase04Tests.cs` with zero compilation errors.
 
-Future work includes Section 7 (Final Gauntlet), extraction goal portal, full victory flow, atmospheric visual polish, regression testing, and a standalone build.
+**Phase 06 — Final Gauntlet & Victory Sequence:** Extended course through Section 7 ($Z = 274.0\,\text{m} \rightarrow 387.0\,\text{m}$) with three consecutive challenges: (1) Challenge 1 timed laser corridor with 3 instant-kill pulsed lasers, amber telegraph warnings, and staggered safe traversal windows; (2) Challenge 2 with 3 autonomously oscillating moving platforms traversing lethal void gaps while reliably carrying the CharacterController with zero slip; (3) Challenge 3 with 4 stepping stone collapsing platforms that flash amber and shake laterally for 0.8s on player contact before dropping into the void; safe landing zones (Rest Platform 18 and 19) between challenges; Extraction Sanctuary and animated swirling Extraction Portal at $Z = 383.0\,\text{m}$ triggering the victory state (locks player movement, pauses timer, stops physics, releases cursor); comprehensive Victory UI overlay showing `EXTRACTION SUCCESSFUL`, final completion time, running death counter, `Restart Game`, and `Quit Game`; full game reset restoring all systems, platforms, timers, and lives; strictly maintained two checkpoints total (Checkpoint 1 at Section 4, Checkpoint 2 at Section 6; deaths in Section 7 respawn at Checkpoint 2); extended kill volume to length 650m ($Z \in [-145\,\text{m}, +505\,\text{m}]$); 112 automated test assertions passing in `VoidboundPhase06Tests.cs` and 65 regression test assertions passing in `VoidboundPhase05Tests.cs` with zero compilation errors.
+
+Future work includes Phase 07 (environment art, volumetric lighting, stars skybox, audio soundtrack, and post-processing polish) and Phase 08 (standalone macOS build, recording, and submission packaging).
 
 ## Requirements and setup
 
