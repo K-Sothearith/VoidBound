@@ -111,6 +111,72 @@ namespace Voidbound.Editor
             Debug.Log("[VoidboundSceneBuilder] Phase 03 integration complete and scene saved!");
         }
 
+        [MenuItem("Voidbound/Build Phase 04 Scene (Spike Path & Laser Corridor)")]
+        public static void BuildPhase04Scene()
+        {
+            Debug.Log("[VoidboundSceneBuilder] Integrating Phase 04 (Section 4 & 5) into existing Voidbound scene...");
+
+            EnsureDirectories();
+            Material stoneMat = GetOrCreateMaterial("M_Stone_Platform", new Color(0.38f, 0.42f, 0.48f), 0.2f);
+            Material neonMat = GetOrCreateMaterial("M_Neon_Cyan", new Color(0.1f, 0.9f, 1f), 0.8f, true, new Color(0.1f, 0.9f, 1f) * 2.5f);
+            Material darkTrimMat = GetOrCreateMaterial("M_Dark_Trim", new Color(0.20f, 0.24f, 0.30f), 0.4f);
+            Material spikeMat = GetOrCreateMaterial("M_Spike_Hazard", new Color(0.14f, 0.15f, 0.18f), 0.6f, true, new Color(1.0f, 0.15f, 0.15f) * 2.0f);
+            Material laserBeamActiveMat = GetOrCreateMaterial("M_Laser_Beam_Active", new Color(1.0f, 0.12f, 0.12f, 1f), 0.9f, true, new Color(1.0f, 0.1f, 0.1f) * 3.5f);
+            Material laserBeamWarningMat = GetOrCreateMaterial("M_Laser_Beam_Warning", new Color(1.0f, 0.65f, 0.1f, 0.7f), 0.8f, true, new Color(1.0f, 0.6f, 0.05f) * 1.8f);
+            Material laserEmitterMat = GetOrCreateMaterial("M_Laser_Emitter", new Color(0.18f, 0.20f, 0.25f), 0.5f, true, new Color(0.1f, 0.9f, 1f) * 0.8f);
+
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                Debug.LogError($"[VoidboundSceneBuilder] Could not open scene at {ScenePath}!");
+                return;
+            }
+
+            GameObject envRoot = GameObject.Find("Environment");
+            if (envRoot == null)
+            {
+                Debug.LogError("[VoidboundSceneBuilder] 'Environment' root not found in scene!");
+                return;
+            }
+
+            // Clean up existing Section 4 and 5 if present for clean idempotent rebuild
+            Transform existingSec4 = envRoot.transform.Find("Section_04_SpikePath");
+            if (existingSec4 != null)
+            {
+                Object.DestroyImmediate(existingSec4.gameObject);
+            }
+
+            Transform existingSec5 = envRoot.transform.Find("Section_05_LaserCorridor");
+            if (existingSec5 != null)
+            {
+                Object.DestroyImmediate(existingSec5.gameObject);
+            }
+
+            // Create Section 4: Spike Path
+            CreateSection04SpikePath(envRoot.transform, stoneMat, neonMat, darkTrimMat, spikeMat);
+
+            // Create Section 5: Laser Corridor
+            CreateSection05LaserCorridor(envRoot.transform, stoneMat, neonMat, darkTrimMat, laserBeamActiveMat, laserBeamWarningMat, laserEmitterMat);
+
+            // Expand Kill Volume Pit to cover all sections through Section 5 (length = 450m, center Z = 100m => Z from -125m to +325m)
+            GameObject kvObj = GameObject.Find("KillVolume_Pit");
+            if (kvObj != null)
+            {
+                BoxCollider bc = kvObj.GetComponent<BoxCollider>();
+                if (bc != null)
+                {
+                    bc.size = new Vector3(200f, 4f, 450f);
+                    kvObj.transform.position = new Vector3(0f, -12f, 100f);
+                }
+            }
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            UpdateBuildSettings();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[VoidboundSceneBuilder] Phase 04 integration complete and scene saved!");
+        }
+
         public static void BuildScene(bool includePhase02)
         {
             Debug.Log($"[VoidboundSceneBuilder] Starting Scene Generation (Include Phase 02: {includePhase02})...");
@@ -800,6 +866,360 @@ namespace Voidbound.Editor
 
             // Completion Gateway Arch at Z = 106.8
             CreateGatewayArch(sec3Root.transform, new Vector3(0f, 0f, 106.8f), stoneMat, neonMat);
+        }
+
+        private static void CreateSection04SpikePath(Transform parent, Material stoneMat, Material neonMat, Material darkTrimMat, Material spikeMat)
+        {
+            GameObject sec4Root = new GameObject("Section_04_SpikePath");
+            sec4Root.transform.SetParent(parent);
+
+            // 1. Entrance Trigger at Z = 107.5
+            GameObject triggerObj = new GameObject("Section_04_Entrance_Trigger");
+            triggerObj.transform.SetParent(sec4Root.transform);
+            triggerObj.transform.position = new Vector3(0f, 1.5f, 107.5f);
+            BoxCollider triggerCol = triggerObj.AddComponent<BoxCollider>();
+            triggerCol.isTrigger = true;
+            triggerCol.size = new Vector3(6f, 3f, 1.5f);
+            SectionTrigger secTrigger = triggerObj.AddComponent<SectionTrigger>();
+            SerializedObject soSecTrigger = new SerializedObject(secTrigger);
+            soSecTrigger.FindProperty("sectionName").stringValue = "Section 4: Spike Path";
+            soSecTrigger.ApplyModifiedProperties();
+
+            // 2. Segment 4.1: Transition Apron & Narrow Traversal Bridge (Z: 107 to 123)
+            CreateWalkwayPlatform(sec4Root.transform, "Platform_07_Section4_Apron", new Vector3(0f, -0.5f, 109f), new Vector3(4.5f, 1f, 4f), stoneMat, darkTrimMat, neonMat);
+            CreateNarrowBridgeSegment(sec4Root.transform, "Bridge_Narrow_01", new Vector3(0f, -0.5f, 117f), new Vector3(2.2f, 1f, 12f), stoneMat, darkTrimMat, neonMat);
+
+            CreateSpike(sec4Root.transform, "Spike_Narrow_01", new Vector3(0.5f, 0f, 115f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+            CreateSpike(sec4Root.transform, "Spike_Narrow_02", new Vector3(-0.5f, 0f, 119f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+
+            // 3. Segment 4.2: Safe Rest & Spike Clusters (Z: 123 to 137)
+            CreateWalkwayPlatform(sec4Root.transform, "Platform_08_Cluster_Rest1", new Vector3(0f, -0.5f, 125f), new Vector3(4.5f, 1f, 4f), stoneMat, darkTrimMat, neonMat);
+            CreateWalkwayPlatform(sec4Root.transform, "Platform_09_Cluster_Hurdle", new Vector3(0f, -0.5f, 130f), new Vector3(4.5f, 1f, 6f), stoneMat, darkTrimMat, neonMat);
+
+            GameObject clusterRoot = new GameObject("SpikeCluster_01");
+            clusterRoot.transform.SetParent(sec4Root.transform);
+            float[] clusterX = new float[] { -1.0f, 0f, 1.0f };
+            float[] clusterZ = new float[] { 129.2f, 130.8f };
+            int spikeIdx = 1;
+            for (int r = 0; r < clusterZ.Length; r++)
+            {
+                for (int c = 0; c < clusterX.Length; c++)
+                {
+                    CreateSpike(clusterRoot.transform, $"Spike_Cluster_{spikeIdx++}", new Vector3(clusterX[c], 0f, clusterZ[r]), new Vector3(0.75f, 1.15f, 0.75f), spikeMat);
+                }
+            }
+            CreateClusterLight(clusterRoot.transform, new Vector3(0f, 0.6f, 130f), new Color(1f, 0.15f, 0.15f), 4.5f, 1.5f);
+
+            CreateWalkwayPlatform(sec4Root.transform, "Platform_10_Cluster_Rest2", new Vector3(0f, -0.5f, 135f), new Vector3(4.5f, 1f, 4f), stoneMat, darkTrimMat, neonMat);
+
+            // 4. Segment 4.3: Offset Precision Segment (Z: 137 to 155)
+            CreateWalkwayPlatform(sec4Root.transform, "Platform_11_Offset_Precision", new Vector3(0f, -0.5f, 146f), new Vector3(4.5f, 1f, 18f), stoneMat, darkTrimMat, neonMat);
+
+            GameObject barrier1 = new GameObject("SpikeBarrier_Offset_01");
+            barrier1.transform.SetParent(sec4Root.transform);
+            CreateSpike(barrier1.transform, "Spike_B1_1", new Vector3(-1.4f, 0f, 141.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+            CreateSpike(barrier1.transform, "Spike_B1_2", new Vector3(-0.7f, 0f, 141.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+            CreateSpike(barrier1.transform, "Spike_B1_3", new Vector3(0.0f, 0f, 141.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+
+            GameObject barrier2 = new GameObject("SpikeBarrier_Offset_02");
+            barrier2.transform.SetParent(sec4Root.transform);
+            CreateSpike(barrier2.transform, "Spike_B2_1", new Vector3(0.0f, 0f, 146.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+            CreateSpike(barrier2.transform, "Spike_B2_2", new Vector3(0.7f, 0f, 146.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+            CreateSpike(barrier2.transform, "Spike_B2_3", new Vector3(1.4f, 0f, 146.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+
+            GameObject barrier3 = new GameObject("SpikeBarrier_Offset_03");
+            barrier3.transform.SetParent(sec4Root.transform);
+            CreateSpike(barrier3.transform, "Spike_B3_1", new Vector3(-0.7f, 0f, 151.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+            CreateSpike(barrier3.transform, "Spike_B3_2", new Vector3(0.0f, 0f, 151.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+            CreateSpike(barrier3.transform, "Spike_B3_3", new Vector3(0.7f, 0f, 151.5f), new Vector3(0.7f, 1.1f, 0.7f), spikeMat);
+
+            CreatePillar(sec4Root.transform, new Vector3(-2.4f, 1.5f, 139f), stoneMat, darkTrimMat);
+            CreatePillar(sec4Root.transform, new Vector3(2.4f, 1.5f, 139f), stoneMat, darkTrimMat);
+            CreatePillar(sec4Root.transform, new Vector3(-2.4f, 1.5f, 153f), stoneMat, darkTrimMat);
+            CreatePillar(sec4Root.transform, new Vector3(2.4f, 1.5f, 153f), stoneMat, darkTrimMat);
+
+            // 5. Segment 4.4: Section 4 Completion & Transition Platform (Z: 155 to 161)
+            GameObject restPlat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            restPlat.name = "Platform_12_Section4_Completion";
+            restPlat.transform.SetParent(sec4Root.transform);
+            restPlat.transform.position = new Vector3(0f, -0.5f, 158f);
+            restPlat.transform.localScale = new Vector3(8f, 1f, 6f);
+            restPlat.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            CreateTrim(restPlat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(restPlat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(restPlat.transform, new Vector3(0f, 0.51f, -0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat);
+            CreateTrim(restPlat.transform, new Vector3(0f, 0.51f, 0.49f), new Vector3(0.98f, 0.02f, 0.02f), darkTrimMat);
+
+            CreatePillar(sec4Root.transform, new Vector3(-3.8f, 1.5f, 156f), stoneMat, darkTrimMat);
+            CreatePillar(sec4Root.transform, new Vector3(3.8f, 1.5f, 156f), stoneMat, darkTrimMat);
+            CreatePillar(sec4Root.transform, new Vector3(-3.8f, 1.5f, 160f), stoneMat, darkTrimMat);
+            CreatePillar(sec4Root.transform, new Vector3(3.8f, 1.5f, 160f), stoneMat, darkTrimMat);
+
+            CreateGatewayArch(sec4Root.transform, new Vector3(0f, 0f, 160.8f), stoneMat, neonMat);
+        }
+
+        private static void CreateSection05LaserCorridor(Transform parent, Material stoneMat, Material neonMat, Material darkTrimMat, Material activeMat, Material warningMat, Material emitterMat)
+        {
+            GameObject sec5Root = new GameObject("Section_05_LaserCorridor");
+            sec5Root.transform.SetParent(parent);
+
+            // 1. Entrance Trigger at Z = 161.5
+            GameObject triggerObj = new GameObject("Section_05_Entrance_Trigger");
+            triggerObj.transform.SetParent(sec5Root.transform);
+            triggerObj.transform.position = new Vector3(0f, 1.5f, 161.5f);
+            BoxCollider triggerCol = triggerObj.AddComponent<BoxCollider>();
+            triggerCol.isTrigger = true;
+            triggerCol.size = new Vector3(6f, 3f, 1.5f);
+            SectionTrigger secTrigger = triggerObj.AddComponent<SectionTrigger>();
+            SerializedObject soSecTrigger = new SerializedObject(secTrigger);
+            soSecTrigger.FindProperty("sectionName").stringValue = "Section 5: Laser Corridor";
+            soSecTrigger.ApplyModifiedProperties();
+
+            // 2. Corridor Walkway Platform (5 x 1 x 49) Z: 161 to 210 (center Z = 185.5)
+            GameObject corridorPlat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            corridorPlat.name = "Platform_13_LaserCorridor_Floor";
+            corridorPlat.transform.SetParent(sec5Root.transform);
+            corridorPlat.transform.position = new Vector3(0f, -0.5f, 185.5f);
+            corridorPlat.transform.localScale = new Vector3(5f, 1f, 49f);
+            corridorPlat.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            CreateTrim(corridorPlat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(corridorPlat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+
+            // Decorative Corridor Columns along sides
+            float[] columnZs = new float[] { 165f, 175f, 184f, 193f, 201f, 209f };
+            for (int i = 0; i < columnZs.Length; i++)
+            {
+                CreatePillar(sec5Root.transform, new Vector3(-2.6f, 1.5f, columnZs[i]), stoneMat, darkTrimMat);
+                CreatePillar(sec5Root.transform, new Vector3(2.6f, 1.5f, columnZs[i]), stoneMat, darkTrimMat);
+            }
+
+            // Overhead Archways between challenges
+            CreateStoneArch(sec5Root.transform, "Arch_Laser_Rest1", 176f, stoneMat, darkTrimMat, neonMat);
+            CreateStoneArch(sec5Root.transform, "Arch_Laser_Rest2", 191f, stoneMat, darkTrimMat, neonMat);
+
+            // 3. Challenge 1: Single Pulsing Laser (Z = 170.0)
+            CreateLaserHazard(sec5Root.transform, "Laser_Challenge1_Single", 170.0f, 1.0f, 2.5f, 1.0f, 1.5f, 0f, LaserState.Inactive, activeMat, warningMat, emitterMat);
+
+            // 4. Challenge 2: Alternating Laser Pair (Z = 181.5 and Z = 186.5)
+            CreateLaserHazard(sec5Root.transform, "Laser_Challenge2_PairA", 181.5f, 1.0f, 2.0f, 1.0f, 1.5f, 0f, LaserState.Active, activeMat, warningMat, emitterMat);
+            CreateLaserHazard(sec5Root.transform, "Laser_Challenge2_PairB", 186.5f, 1.0f, 2.0f, 1.0f, 1.5f, 2.25f, LaserState.Active, activeMat, warningMat, emitterMat);
+
+            // 5. Challenge 3: Sequential Laser Group (Z = 197.0, 201.0, 205.0)
+            CreateLaserHazard(sec5Root.transform, "Laser_Challenge3_SeqA", 197.0f, 1.0f, 4.0f, 0.8f, 1.2f, 0.0f, LaserState.Warning, activeMat, warningMat, emitterMat);
+            CreateLaserHazard(sec5Root.transform, "Laser_Challenge3_SeqB", 201.0f, 1.0f, 4.0f, 0.8f, 1.2f, 0.8f, LaserState.Warning, activeMat, warningMat, emitterMat);
+            CreateLaserHazard(sec5Root.transform, "Laser_Challenge3_SeqC", 205.0f, 1.0f, 4.0f, 0.8f, 1.2f, 1.6f, LaserState.Warning, activeMat, warningMat, emitterMat);
+
+            // 6. Section 5 Arrival / Transition Platform (8 x 1 x 12) Z: 210 to 222 (center Z = 216)
+            GameObject arrivalPlat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            arrivalPlat.name = "Platform_14_Section5_Arrival";
+            arrivalPlat.transform.SetParent(sec5Root.transform);
+            arrivalPlat.transform.position = new Vector3(0f, -0.5f, 216f);
+            arrivalPlat.transform.localScale = new Vector3(8f, 1f, 12f);
+            arrivalPlat.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            CreateTrim(arrivalPlat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(arrivalPlat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(arrivalPlat.transform, new Vector3(0f, 0.51f, -0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat);
+            CreateTrim(arrivalPlat.transform, new Vector3(0f, 0.51f, 0.49f), new Vector3(0.98f, 0.02f, 0.02f), darkTrimMat);
+
+            CreatePillar(sec5Root.transform, new Vector3(-3.8f, 1.5f, 211f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(3.8f, 1.5f, 211f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(-3.8f, 1.5f, 221f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(3.8f, 1.5f, 221f), stoneMat, darkTrimMat);
+
+            // Gateway Arch transitioning to Section 6 at Z = 221.5
+            CreateGatewayArch(sec5Root.transform, new Vector3(0f, 0f, 221.5f), stoneMat, neonMat);
+        }
+
+        private static GameObject CreateWalkwayPlatform(Transform parent, string name, Vector3 pos, Vector3 scale, Material stoneMat, Material trimMat, Material neonMat)
+        {
+            GameObject plat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            plat.name = name;
+            plat.transform.SetParent(parent);
+            plat.transform.position = pos;
+            plat.transform.localScale = scale;
+            plat.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            CreateTrim(plat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), trimMat);
+            CreateTrim(plat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), trimMat);
+            return plat;
+        }
+
+        private static GameObject CreateNarrowBridgeSegment(Transform parent, string name, Vector3 pos, Vector3 scale, Material stoneMat, Material trimMat, Material neonMat)
+        {
+            GameObject bridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            bridge.name = name;
+            bridge.transform.SetParent(parent);
+            bridge.transform.position = pos;
+            bridge.transform.localScale = scale;
+            bridge.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            CreateTrim(bridge.transform, new Vector3(-0.48f, 0.51f, 0f), new Vector3(0.04f, 0.02f, 0.98f), trimMat);
+            CreateTrim(bridge.transform, new Vector3(0.48f, 0.51f, 0f), new Vector3(0.04f, 0.02f, 0.98f), trimMat);
+            return bridge;
+        }
+
+        private static GameObject CreateSpike(Transform parent, string name, Vector3 position, Vector3 size, Material spikeMat)
+        {
+            GameObject spikeObj = new GameObject(name);
+            spikeObj.transform.SetParent(parent);
+            spikeObj.transform.position = position;
+
+            MeshFilter mf = spikeObj.AddComponent<MeshFilter>();
+            mf.sharedMesh = GetOrCreatePyramidMesh(size.x, size.z, size.y);
+
+            MeshRenderer mr = spikeObj.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = spikeMat;
+
+            BoxCollider col = spikeObj.AddComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.center = new Vector3(0f, size.y * 0.45f, 0f);
+            col.size = new Vector3(size.x * 0.85f, size.y * 0.9f, size.z * 0.85f);
+
+            GameObject lightObj = new GameObject("SpikeLight");
+            lightObj.transform.SetParent(spikeObj.transform);
+            lightObj.transform.localPosition = new Vector3(0f, size.y * 0.8f, 0f);
+            Light l = lightObj.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = new Color(1.0f, 0.15f, 0.15f);
+            l.range = 2.0f;
+            l.intensity = 0.8f;
+
+            SpikeHazard hazard = spikeObj.AddComponent<SpikeHazard>();
+            SerializedObject so = new SerializedObject(hazard);
+            so.FindProperty("hazardName").stringValue = "Impaled by Spikes";
+            so.FindProperty("instantKill").boolValue = true;
+            so.FindProperty("spikeRenderer").objectReferenceValue = mr;
+            so.FindProperty("spikeLight").objectReferenceValue = l;
+            so.ApplyModifiedProperties();
+
+            return spikeObj;
+        }
+
+        private static Mesh GetOrCreatePyramidMesh(float width, float depth, float height)
+        {
+            Mesh mesh = new Mesh();
+            mesh.name = $"Pyramid_{width}_{depth}_{height}";
+            float hw = width * 0.5f;
+            float hd = depth * 0.5f;
+
+            Vector3 apex = new Vector3(0, height, 0);
+            Vector3 p0 = new Vector3(-hw, 0, -hd);
+            Vector3 p1 = new Vector3(hw, 0, -hd);
+            Vector3 p2 = new Vector3(hw, 0, hd);
+            Vector3 p3 = new Vector3(-hw, 0, hd);
+
+            Vector3[] vertices = new Vector3[]
+            {
+                p0, p1, apex,
+                p1, p2, apex,
+                p2, p3, apex,
+                p3, p0, apex,
+                p0, p3, p2,
+                p0, p2, p1
+            };
+
+            int[] triangles = new int[]
+            {
+                0, 2, 1,
+                3, 5, 4,
+                6, 8, 7,
+                9, 11, 10,
+                12, 13, 14,
+                15, 16, 17
+            };
+
+            mesh.vertices = vertices;
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static void CreateClusterLight(Transform parent, Vector3 pos, Color color, float range, float intensity)
+        {
+            GameObject lightObj = new GameObject("ClusterLight");
+            lightObj.transform.SetParent(parent);
+            lightObj.transform.position = pos;
+            Light l = lightObj.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = color;
+            l.range = range;
+            l.intensity = intensity;
+        }
+
+        private static GameObject CreateLaserHazard(Transform parent, string name, float zPos, float height,
+            float inactiveDur, float warningDur, float activeDur, float initialDelay, LaserState startState,
+            Material activeMat, Material warningMat, Material emitterMat)
+        {
+            GameObject laserRoot = new GameObject(name);
+            laserRoot.transform.SetParent(parent);
+            laserRoot.transform.position = new Vector3(0f, height, zPos);
+
+            // Left and Right emitter housings mounted on side posts
+            GameObject emitterLeft = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            emitterLeft.name = "Emitter_Left";
+            emitterLeft.transform.SetParent(laserRoot.transform);
+            emitterLeft.transform.localPosition = new Vector3(-2.35f, 0f, 0f);
+            emitterLeft.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            emitterLeft.transform.localScale = new Vector3(0.35f, 0.15f, 0.35f);
+            emitterLeft.GetComponent<Renderer>().sharedMaterial = emitterMat;
+            Object.DestroyImmediate(emitterLeft.GetComponent<Collider>());
+
+            GameObject emitterRight = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            emitterRight.name = "Emitter_Right";
+            emitterRight.transform.SetParent(laserRoot.transform);
+            emitterRight.transform.localPosition = new Vector3(2.35f, 0f, 0f);
+            emitterRight.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            emitterRight.transform.localScale = new Vector3(0.35f, 0.15f, 0.35f);
+            emitterRight.GetComponent<Renderer>().sharedMaterial = emitterMat;
+            Object.DestroyImmediate(emitterRight.GetComponent<Collider>());
+
+            // Laser Beam (Cube spanning from -2.25 to +2.25 => width 4.5m)
+            GameObject beamObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            beamObj.name = "BeamMesh";
+            beamObj.transform.SetParent(laserRoot.transform);
+            beamObj.transform.localPosition = Vector3.zero;
+            beamObj.transform.localScale = new Vector3(4.5f, 0.12f, 0.12f);
+            Renderer beamRenderer = beamObj.GetComponent<Renderer>();
+            beamRenderer.sharedMaterial = activeMat;
+
+            // Trigger BoxCollider with 0.5m depth in Z to reliably catch player at full sprint
+            BoxCollider beamCol = beamObj.GetComponent<BoxCollider>();
+            beamCol.isTrigger = true;
+            beamCol.size = new Vector3(1.0f, 3.5f, 4.0f);
+
+            // Central Beam Light
+            GameObject lightObj = new GameObject("BeamLight");
+            lightObj.transform.SetParent(laserRoot.transform);
+            lightObj.transform.localPosition = Vector3.zero;
+            Light beamLight = lightObj.AddComponent<Light>();
+            beamLight.type = LightType.Point;
+            beamLight.color = new Color(1f, 0.15f, 0.15f);
+            beamLight.range = 5.0f;
+            beamLight.intensity = 2.5f;
+
+            // LaserHazard component
+            LaserHazard hazard = laserRoot.AddComponent<LaserHazard>();
+            SerializedObject so = new SerializedObject(hazard);
+            so.FindProperty("inactiveDuration").floatValue = inactiveDur;
+            so.FindProperty("warningDuration").floatValue = warningDur;
+            so.FindProperty("activeDuration").floatValue = activeDur;
+            so.FindProperty("initialDelay").floatValue = initialDelay;
+            so.FindProperty("startingState").enumValueIndex = (int)startState;
+            so.FindProperty("beamRenderer").objectReferenceValue = beamRenderer;
+            so.FindProperty("beamCollider").objectReferenceValue = beamCol;
+            so.FindProperty("beamLight").objectReferenceValue = beamLight;
+
+            SerializedProperty emittersProp = so.FindProperty("emitterRenderers");
+            emittersProp.arraySize = 2;
+            emittersProp.GetArrayElementAtIndex(0).objectReferenceValue = emitterLeft.GetComponent<Renderer>();
+            emittersProp.GetArrayElementAtIndex(1).objectReferenceValue = emitterRight.GetComponent<Renderer>();
+
+            so.ApplyModifiedProperties();
+            return laserRoot;
         }
 
         private static void CreateBridgeSegment(Transform parent, string name, Vector3 pos, Vector3 scale, Material stoneMat, Material trimMat)

@@ -2,7 +2,7 @@
 
 *A first-person parkour journey through floating ruins in a night-sky void.*
 
-> **Development status:** In progress — Phases 01, 02, and 03 implemented. The complete seven-section course and standalone build are not yet available.
+> **Development status:** In progress — Phases 01, 02, 03, and 04 implemented. The complete seven-section course and standalone build are not yet available.
 
 ## Overview
 
@@ -42,8 +42,8 @@ There are no other planned checkpoints. The elapsed-time HUD tracks the run; the
 | 1. Movement Tutorial | Learn movement and jumping; interact with a test terminal | Implemented |
 | 2. Hammer Swing | Cross three swinging hammers with safe resting areas | Implemented; manually traversed |
 | 3. Moving Platform | Stand on a pressure plate to summon a platform; release it and jump aboard as it returns | Implemented |
-| 4. Spike Path | Navigate spike formations on a narrow bridge | Planned |
-| 5. Laser Corridor | Time movement around active and inactive lasers | Planned |
+| 4. Spike Path | Navigate spike formations on a narrow bridge | Implemented |
+| 5. Laser Corridor | Time movement around active and inactive lasers | Implemented |
 | 6. Physics Chamber | Push two crates from opposite sides onto two plates to open a door | Planned |
 | 7. Final Gauntlet | Combine learned obstacles and reach the goal portal | Planned |
 
@@ -56,6 +56,8 @@ The temporary prototype finish marker from Phase 01 has been removed from the pl
 **Phase 02 — Swinging Hammers:** Three swinging hammer obstacles with different phase offsets, two rest areas, section trigger, reusable hazard code, and physics components. Antigravity's original Phase 02 report records 30 passing automated assertions and no compilation errors. **Those results predate a manual remake of the hammer behavior**, so they should not be treated as verification of the current modified collision behavior. The updated section has been manually confirmed traversable.
 
 **Phase 03 — Pressure-Plate Moving Platform & Checkpoint 1:** Section 3 departure and arrival platforms; Checkpoint 1 at Section 3 entrance with visual indicator light/emission and respawn point; depressible pressure plate situated close to the void ledge; kinematic moving platform traversing a 20m lethal void gap at 6.5 m/s with return delay; reliable zero-slip CharacterController player transport via unified single-move physics; two-tier gravity architecture (normal platform jump gravity -20 m/s² with 1.8m jump apex, accelerated -45 m/s² void plunge gravity below platform level); eliminated mid-air jump spam exploit; restored on-screen notification text exclusively for checkpoint activation while keeping general event reporting banners silenced; 89 passing automated assertions with zero compilation errors and full Phase 01/02 regression pass (161 total passing assertions). Scene cleanup performed: Terminal Alpha reoriented to face player spawn, temporary Phase 01 finish marker removed from scene, and Checkpoint 1 positioned inward for prominence without blocking player path.
+
+**Phase 04 — Spike Path & Laser Corridor:** Section 4 narrow stone bridge over lethal void with single edge spikes, a 6-spike hurdle cluster jumping challenge, and three staggered offset precision barriers with safe corridors; Section 5 corridor featuring three distinct laser mechanics (single pulsing laser, alternating phase-offset laser pair, and sequential sweeping wave group with a 2.4s all-clear window); reusable `SpikeHazard` and `LaserHazard` scripts with visual telegraphing (inactive, amber warning, lethal red active) and single-death debounce guards; deaths in Section 4 and 5 reliably respawn at Checkpoint 1; expanded lethal void kill volume across all sections; 57 passing automated assertions with zero compilation errors and full Phase 01/02/03 regression pass (218 total passing assertions across the project). Checkpoint 2 is strictly preserved for Phase 05.
 
 Future work includes Checkpoint 2 (Section 6), remaining obstacles (Spike Path, Laser Corridor, Physics Chamber, Final Gauntlet), full victory flow, atmospheric visual polish, regression testing, and a standalone build.
 
