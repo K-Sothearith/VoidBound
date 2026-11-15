@@ -127,6 +127,7 @@ namespace Voidbound.Core
             activeCheckpointPosition = position;
             activeCheckpointRotation = rotation;
             hasCustomCheckpoint = true;
+            ShowNotification($"Checkpoint Activated: {checkpointName}", 2.5f);
         }
 
         public void SetSection(string sectionName)

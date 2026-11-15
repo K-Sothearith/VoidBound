@@ -197,14 +197,28 @@ namespace Voidbound.UI
 
         public void DisplayNotification(string message, float duration)
         {
-            // Event reporting text notifications disabled per game design request
+            if (notificationText == null || string.IsNullOrEmpty(message)) return;
+
+            // Only display activity notification text for Checkpoint activation per game design
+            if (!message.StartsWith("Checkpoint", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (notificationCoroutine != null)
+            {
+                StopCoroutine(notificationCoroutine);
+            }
+            notificationCoroutine = StartCoroutine(NotificationRoutine(message, duration));
         }
 
         private IEnumerator NotificationRoutine(string message, float duration)
         {
+            notificationText.gameObject.SetActive(true);
             notificationText.text = message;
             yield return new WaitForSecondsRealtime(duration);
             notificationText.text = string.Empty;
+            notificationText.gameObject.SetActive(false);
             notificationCoroutine = null;
         }
     }

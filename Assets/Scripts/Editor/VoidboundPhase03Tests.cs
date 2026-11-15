@@ -305,6 +305,10 @@ namespace Voidbound.Editor
                 // 13. Checkpoint 1 Activation & State Test
                 Assert(!gm.HasCustomCheckpoint, "Pre-Checkpoint Custom State Test", "Game starts without custom checkpoint");
 
+                string lastNotif = null;
+                System.Action<string, float> notifListener = (msg, dur) => { lastNotif = msg; };
+                gm.OnNotification += notifListener;
+
                 // Move player into Checkpoint 1 trigger
                 var cpTrigger = typeof(Checkpoint).GetMethod("OnTriggerEnter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 cpTrigger?.Invoke(cp, new object[] { playerCC });
@@ -315,6 +319,10 @@ namespace Voidbound.Editor
                     "GameManager Active Position Test", $"Active respawn Z is {gm.ActiveCheckpointPosition.z:F1} (Matches Checkpoint 1)");
                 Assert(gm.CurrentSectionName == "Section 3: Moving Platform",
                     "GameManager Section Update Test", $"Current section is '{gm.CurrentSectionName}'");
+                Assert(lastNotif == "Checkpoint Activated: Checkpoint 1",
+                    "Checkpoint Activation Event Notification Test", $"Notification fired: '{lastNotif}'");
+
+                gm.OnNotification -= notifListener;
 
                 // 14. Respawn at Checkpoint 1 After Death Test
                 Assert(gm.CurrentLives == 3, "Pre-Death Lives Test", "Player has 3 lives before death");
@@ -413,6 +421,26 @@ namespace Voidbound.Editor
                 }
                 float fallenDist = startY - player.transform.position.y;
                 Assert(fallenDist >= 0f, "Falling Downward Test", $"Player falling downward (drop: {fallenDist:F2}m)");
+
+                // 19. Checkpoint-Only Notification Filter & Display Test
+                UIManager ui = Object.FindFirstObjectByType<UIManager>();
+                Assert(ui != null, "UIManager Presence Test", "UIManager exists in scene");
+                if (ui != null)
+                {
+                    var notifField = typeof(UIManager).GetField("notificationText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var textComp = notifField?.GetValue(ui) as UnityEngine.UI.Text;
+                    Assert(textComp != null, "NotificationText Component Test", "NotificationText component is linked in UIManager");
+
+                    // Filter test: non-checkpoint notification should be ignored
+                    ui.DisplayNotification("Random Activity Toast", 2f);
+                    Assert(!textComp.gameObject.activeSelf || string.IsNullOrEmpty(textComp.text),
+                        "Silenced Non-Checkpoint Notification Test", "Non-checkpoint notifications are filtered out");
+
+                    // Checkpoint notification test: should display and activate
+                    ui.DisplayNotification("Checkpoint Activated: Checkpoint 1", 2.5f);
+                    Assert(textComp.gameObject.activeSelf && textComp.text == "Checkpoint Activated: Checkpoint 1",
+                        "Displayed Checkpoint Notification Test", $"NotificationText displays '{textComp.text}' and is active");
+                }
             }
             catch (System.Exception ex)
             {

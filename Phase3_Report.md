@@ -33,10 +33,10 @@ All existing Phase 01 and Phase 02 systems (player movement, camera look, sprint
 - **Section 3 Core Setup:** Built Departure Platform ($Z: 63-75\text{m}$), Arrival Platform ($Z: 95-107\text{m}$), 20m void gap ($Z: 75-95\text{m}$), and completion gateway arch at $Z = 106.8\text{m}$.
 
 ### Iteration 2: Immersion Polish, Pressure Plate Adjustment & Riding Fixes
-- **Removal of Event Reporting Pop-ups:**
-  - Removed on-screen notification text that reported gameplay events ("Entering Section 2: Hammer Swing", "Entering Section 3: Moving Platform", "Knocked by Hammer!", "Checkpoint Activated").
-  - Silenced `ShowNotification` calls across `SectionTrigger`, `HammerKnockback`, `Checkpoint`, and `GameManager`.
-  - Deactivated `NotificationText` in `UIManager` to keep the center of the viewport clean.
+- **Selective Checkpoint HUD Notification (Event Reporting Refinement):**
+  - Removed general on-screen notification pop-ups that reported gameplay events ("Entering Section 2: Hammer Swing", "Entering Section 3: Moving Platform", "Knocked by Hammer!").
+  - Restored on-screen notification text exclusively for Checkpoint activation ("Checkpoint Activated: Checkpoint 1") per user request.
+  - Configured `UIManager.DisplayNotification` to dynamically activate `NotificationText` only when a checkpoint activation message is received, keeping the viewport clean of intrusive event toasts while confirming checkpoint saves.
 - **Pressure Plate Re-anchoring:**
   - Moved the pressure plate closer to the departure ledge ($Z = 70.5\text{m} \rightarrow Z = 73.2\text{m}$).
   - With platform front edge at $Z = 75.0\text{m}$ and plate radius $1.1\text{m}$, the front lip rests just $0.7\text{m}$ from the edge, enabling an intuitive step-on/step-off boarding flow.
@@ -130,16 +130,16 @@ All existing Phase 01 and Phase 02 systems (player movement, camera look, sprint
 | `Assets/Scripts/Interactions/PressurePlate.cs.meta` | Created | Unity asset metadata. |
 | `Assets/Scripts/Interactions/PlatformRiderDetector.cs` | Created | Child trigger script relaying rider contact to MovingPlatform. |
 | `Assets/Scripts/Interactions/PlatformRiderDetector.cs.meta` | Created | Unity asset metadata. |
-| `Assets/Scripts/Core/Checkpoint.cs` | Modified | Added IsActivated, checkpoint name/section getters, removed toast notifications, and subscribed to GameManager.OnGameReset. |
-| `Assets/Scripts/Core/GameManager.cs` | Modified | Added OnGameReset event, exposed HasCustomCheckpoint / active checkpoint getters, removed notification from SetCheckpoint. |
+| `Assets/Scripts/Core/Checkpoint.cs` | Modified | Added IsActivated, checkpoint name/section getters, and subscribed to GameManager.OnGameReset. |
+| `Assets/Scripts/Core/GameManager.cs` | Modified | Added OnGameReset event, exposed HasCustomCheckpoint / active checkpoint getters, added checkpoint notification to SetCheckpoint. |
 | `Assets/Scripts/Core/SectionTrigger.cs` | Modified | Removed notificationText and notification display calls. |
 | `Assets/Scripts/Obstacles/HammerKnockback.cs` | Modified | Removed on-screen "Knocked by Hammer!" notification pop-up. |
-| `Assets/Scripts/UI/UIManager.cs` | Modified | Silenced DisplayNotification and hidden NotificationText on HUD. |
+| `Assets/Scripts/UI/UIManager.cs` | Modified | Configured DisplayNotification to selectively display Checkpoint activation toasts while filtering out general event notifications. |
 | `Assets/Scripts/Editor/VoidboundSceneBuilder.cs` | Modified | BuildPhase03Scene tool with Terminal Alpha rotation, marker removal, inward Checkpoint 1, plate at Z=73.2, platform speed 6.5m/s, Discrete Rigidbody, player gravity. |
 | `Assets/Scripts/Editor/VoidboundPhase01Tests.cs` | Modified | Preserved PrototypeFinishMarker class assertion following GameObject cleanup. |
-| `Assets/Scripts/Editor/VoidboundPhase03Tests.cs` | Created | Automated test suite comprising 79 assertions covering Checkpoint 1, Pressure Plate, Moving Platform, Riding, Void Kill, Midair Jump Prevention, Fast Fall, and Regressions. |
+| `Assets/Scripts/Editor/VoidboundPhase03Tests.cs` | Created | Automated test suite comprising 89 assertions covering Checkpoint 1, Pressure Plate, Moving Platform, Riding, Void Kill, Midair Jump Prevention, Fast Fall, Selective Checkpoint Notifications, and Regressions. |
 | `Assets/Scripts/Editor/VoidboundPhase03Tests.cs.meta` | Created | Unity asset metadata. |
-| `Assets/Scenes/Voidbound.unity` | Modified | Saved scene with Section 3, plate at Z=73.2, platform speed 6.5m/s, Discrete Rigidbody, player jumpHeight 1.8 / gravity -20 / voidGravity -45, and notification text disabled. |
+| `Assets/Scenes/Voidbound.unity` | Modified | Saved scene with Section 3, plate at Z=73.2, platform speed 6.5m/s, Discrete Rigidbody, player jumpHeight 1.8 / gravity -20 / voidGravity -45, and notification text configured for checkpoint display. |
 | `README.md` | Modified | Updated progress to include Phase 03 as implemented with all latest adjustments. |
 | `Phase3_Report.md` | Created | Comprehensive implementation, iteration, and validation report. |
 
@@ -153,10 +153,10 @@ The project includes custom Unity Editor test runners accessible both via batch 
 
 | Test Suite | Menu / Method | Assertions Passed | Assertions Failed | Result |
 |---|---|:---:|:---:|:---:|
-| **Phase 03 Test Suite** | `VoidboundPhase03Tests.RunTests` | **79** | **0** | **PASS** |
+| **Phase 03 Test Suite** | `VoidboundPhase03Tests.RunTests` | **89** | **0** | **PASS** |
 | **Phase 02 Regression** | `VoidboundPhase02Tests.RunTests` | **43** | **0** | **PASS** |
 | **Phase 01 Regression** | `VoidboundPhase01Tests.RunTests` | **29** | **0** | **PASS** |
-| **Total** | | **151** | **0** | **ALL PASS** |
+| **Total** | | **161** | **0** | **ALL PASS** |
 
 ### 5.2 Key Validated Scenarios
 
@@ -165,7 +165,7 @@ The project includes custom Unity Editor test runners accessible both via batch 
 3. **Section 1 Traversal Margin:** Verified jump apex of $1.8\text{m}$ and platforming gravity of $-20.0\,\text{m/s}^2$ provides $\approx 0.85\text{s}$ air time, comfortably clearing the $4.0\text{m}$ gap in Section 1 at walking speed ($5.1\text{m}$) and sprinting speed ($8.1\text{m}$).
 4. **Fast Void Descent:** Verified falling below platform level ($Y < -0.3\text{m}$) engages $-45.0\,\text{m/s}^2$ void gravity, plunging into the kill volume in $\approx 0.7\text{s}$.
 5. **Mid-air Jump Prevention:** Verified `isGrounded` is strictly `false` in mid-air; verified that jump input in mid-air cannot re-trigger vertical jump velocity.
-6. **Clean HUD Display:** Verified no event notification text appears on screen during section transitions, hammer hits, or checkpoint activations.
+6. **Selective Checkpoint HUD Notification:** Verified that checkpoint activation displays its notification banner on screen ("Checkpoint Activated: Checkpoint 1") while general event notification pop-ups (section entry, hammer hits) remain silenced.
 7. **Platform Speed:** Verified moving platform speed is $6.5\text{m/s}$ (fast, responsive transit across the 20m gap).
 8. **Plate Placement:** Verified pressure plate is at $Z = 73.2\text{m}$ (close to departure ledge edge at $Z = 75.0\text{m}$).
 9. **Riding Stability (Zero Push / Zero Slip):** Verified player CharacterController moves smoothly with platform displacement delta ($1.625\text{m}$ per $0.25\text{s}$) with zero slip, no parenting, and no collision fighting.
