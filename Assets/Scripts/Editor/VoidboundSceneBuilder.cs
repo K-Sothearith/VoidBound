@@ -152,6 +152,12 @@ namespace Voidbound.Editor
                 Object.DestroyImmediate(existingSec5.gameObject);
             }
 
+            Transform existingSec6 = envRoot.transform.Find("Section_06_PhysicsChamber");
+            if (existingSec6 != null)
+            {
+                Object.DestroyImmediate(existingSec6.gameObject);
+            }
+
             // Create Section 4: Spike Path
             CreateSection04SpikePath(envRoot.transform, stoneMat, neonMat, darkTrimMat, spikeMat);
 
@@ -175,6 +181,92 @@ namespace Voidbound.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[VoidboundSceneBuilder] Phase 04 integration complete and scene saved!");
+        }
+
+        [MenuItem("Voidbound/Build Phase 05 Scene (Physics Chamber & Checkpoint 2)")]
+        public static void BuildPhase05Scene()
+        {
+            Debug.Log("[VoidboundSceneBuilder] Integrating Phase 05 (Section 6 Physics Chamber & Checkpoint 2) into existing Voidbound scene...");
+
+            EnsureDirectories();
+            Material stoneMat = GetOrCreateMaterial("M_Stone_Platform", new Color(0.38f, 0.42f, 0.48f), 0.2f);
+            Material neonMat = GetOrCreateMaterial("M_Neon_Cyan", new Color(0.1f, 0.9f, 1f), 0.8f, true, new Color(0.1f, 0.9f, 1f) * 2.5f);
+            Material darkTrimMat = GetOrCreateMaterial("M_Dark_Trim", new Color(0.20f, 0.24f, 0.30f), 0.4f);
+            Material spikeMat = GetOrCreateMaterial("M_Spike_Hazard", new Color(0.14f, 0.15f, 0.18f), 0.6f, true, new Color(1.0f, 0.15f, 0.15f) * 2.0f);
+            Material laserBeamActiveMat = GetOrCreateMaterial("M_Laser_Beam_Active", new Color(1.0f, 0.12f, 0.12f, 1f), 0.9f, true, new Color(1.0f, 0.1f, 0.1f) * 3.5f);
+            Material laserBeamWarningMat = GetOrCreateMaterial("M_Laser_Beam_Warning", new Color(1.0f, 0.65f, 0.1f, 0.7f), 0.8f, true, new Color(1.0f, 0.6f, 0.05f) * 1.8f);
+            Material laserEmitterMat = GetOrCreateMaterial("M_Laser_Emitter", new Color(0.18f, 0.20f, 0.25f), 0.5f, true, new Color(0.1f, 0.9f, 1f) * 0.8f);
+            Material crateMat = GetOrCreateMaterial("M_Crate_Base", new Color(0.25f, 0.32f, 0.40f), 0.6f, true, new Color(0.1f, 0.8f, 1.0f) * 0.4f);
+            Material doorMat = GetOrCreateMaterial("M_Door_Blast", new Color(0.18f, 0.22f, 0.28f), 0.5f, true, new Color(0.1f, 0.5f, 0.8f) * 0.5f);
+            Material doorLockedMat = GetOrCreateMaterial("M_Door_Status_Locked", new Color(1.0f, 0.15f, 0.15f), 0.8f, true, new Color(1.0f, 0.15f, 0.15f) * 2.5f);
+            Material doorUnlockedMat = GetOrCreateMaterial("M_Door_Status_Unlocked", new Color(0.1f, 0.95f, 0.4f), 0.8f, true, new Color(0.1f, 0.95f, 0.4f) * 2.5f);
+
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                Debug.LogError($"[VoidboundSceneBuilder] Could not open scene at {ScenePath}!");
+                return;
+            }
+
+            GameObject envRoot = GameObject.Find("Environment");
+            if (envRoot == null)
+            {
+                Debug.LogError("[VoidboundSceneBuilder] 'Environment' root not found in scene!");
+                return;
+            }
+
+            // Part A: Ensure Checkpoint 1 is relocated from Section 3 to Section 4 entrance (Z ≈ 107.5)
+            // 1. Remove Checkpoint 1 from Section 3 if present
+            Transform sec3Tr = envRoot.transform.Find("Section_03_MovingPlatform");
+            if (sec3Tr != null)
+            {
+                Transform oldCp1 = sec3Tr.Find("Checkpoint_01");
+                if (oldCp1 != null)
+                {
+                    Object.DestroyImmediate(oldCp1.gameObject);
+                    Debug.Log("[VoidboundSceneBuilder] Removed Checkpoint 1 from Section 3 entrance.");
+                }
+            }
+
+            // 2. Ensure Checkpoint 1 is at Section 4 entrance (Z ≈ 107.5)
+            Transform sec4Tr = envRoot.transform.Find("Section_04_SpikePath");
+            if (sec4Tr != null)
+            {
+                Transform cp1Tr = sec4Tr.Find("Checkpoint_01");
+                if (cp1Tr == null)
+                {
+                    CreateCheckpoint01AtSection4(sec4Tr, stoneMat, neonMat);
+                    Debug.Log("[VoidboundSceneBuilder] Created relocated Checkpoint 1 at Section 4 entrance.");
+                }
+            }
+
+            // Part B: Clean up existing Section 6 if present for clean idempotent rebuild
+            Transform existingSec6 = envRoot.transform.Find("Section_06_PhysicsChamber");
+            if (existingSec6 != null)
+            {
+                Object.DestroyImmediate(existingSec6.gameObject);
+            }
+
+            // Create Section 6: Physics Chamber & Checkpoint 2
+            CreateSection06PhysicsChamber(envRoot.transform, stoneMat, neonMat, darkTrimMat, crateMat, doorMat, doorLockedMat, doorUnlockedMat);
+
+            // Expand Kill Volume Pit to cover all sections through Section 6 (length = 550m, center Z = 150m => Z from -125m to +425m)
+            GameObject kvObj = GameObject.Find("KillVolume_Pit");
+            if (kvObj != null)
+            {
+                BoxCollider bc = kvObj.GetComponent<BoxCollider>();
+                if (bc != null)
+                {
+                    bc.size = new Vector3(200f, 4f, 550f);
+                    kvObj.transform.position = new Vector3(0f, -12f, 150f);
+                }
+            }
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            UpdateBuildSettings();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[VoidboundSceneBuilder] Phase 05 integration complete and scene saved!");
         }
 
         public static void BuildScene(bool includePhase02)
@@ -658,59 +750,9 @@ namespace Voidbound.Editor
             soSecTrigger.FindProperty("sectionName").stringValue = "Section 3: Moving Platform";
             soSecTrigger.ApplyModifiedProperties();
 
-            // 2. Checkpoint 1 at Entrance to Section 3 (Z = 65.0, monument at X = -1.8 for high visibility without blocking central path)
-            GameObject cpObj = new GameObject("Checkpoint_01");
-            cpObj.transform.SetParent(sec3Root.transform);
-            cpObj.transform.position = new Vector3(0f, 0f, 65.0f);
-            BoxCollider cpCol = cpObj.AddComponent<BoxCollider>();
-            cpCol.isTrigger = true;
-            cpCol.center = new Vector3(0f, 1.5f, 0f);
-            cpCol.size = new Vector3(7.6f, 3.5f, 2.5f);
+            // Note: Checkpoint 1 relocated to Section 4 Entrance (Z ≈ 107.5) in Phase 5 per specification.
 
-            GameObject spawnPointObj = new GameObject("SpawnPoint");
-            spawnPointObj.transform.SetParent(cpObj.transform);
-            spawnPointObj.transform.position = new Vector3(0f, 0.1f, 65.0f);
-            spawnPointObj.transform.rotation = Quaternion.identity;
-
-            // Visual Checkpoint Monument placed at X = -1.8, Z = 65.5 (prominently visible, clear of central walking path)
-            GameObject cpPedestal = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            cpPedestal.name = "CheckpointPedestal";
-            cpPedestal.transform.SetParent(cpObj.transform);
-            cpPedestal.transform.localPosition = new Vector3(-1.8f, 0.4f, 0.5f);
-            cpPedestal.transform.localScale = new Vector3(0.8f, 0.4f, 0.8f);
-            cpPedestal.GetComponent<Renderer>().sharedMaterial = stoneMat;
-
-            GameObject cpDiamond = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            cpDiamond.name = "CheckpointIndicator";
-            cpDiamond.transform.SetParent(cpObj.transform);
-            cpDiamond.transform.localPosition = new Vector3(-1.8f, 1.4f, 0.5f);
-            cpDiamond.transform.localRotation = Quaternion.Euler(45f, 45f, 45f);
-            cpDiamond.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-            Renderer cpRenderer = cpDiamond.GetComponent<Renderer>();
-            cpRenderer.sharedMaterial = neonMat;
-            Object.DestroyImmediate(cpDiamond.GetComponent<Collider>());
-
-            GameObject cpLightObj = new GameObject("CheckpointLight");
-            cpLightObj.transform.SetParent(cpObj.transform);
-            cpLightObj.transform.localPosition = new Vector3(-1.8f, 1.4f, 0.5f);
-            Light cpLight = cpLightObj.AddComponent<Light>();
-            cpLight.type = LightType.Point;
-            cpLight.color = neonMat.color;
-            cpLight.range = 5.0f;
-            cpLight.intensity = 0.6f;
-
-            Checkpoint cpComp = cpObj.AddComponent<Checkpoint>();
-            SerializedObject soCp = new SerializedObject(cpComp);
-            soCp.FindProperty("checkpointName").stringValue = "Checkpoint 1";
-            soCp.FindProperty("sectionName").stringValue = "Section 3: Moving Platform";
-            soCp.FindProperty("spawnPointOverride").objectReferenceValue = spawnPointObj.transform;
-            soCp.FindProperty("indicatorRenderer").objectReferenceValue = cpRenderer;
-            soCp.FindProperty("indicatorLight").objectReferenceValue = cpLight;
-            soCp.FindProperty("inactiveColor").colorValue = new Color(0.3f, 0.3f, 0.4f, 1f);
-            soCp.FindProperty("activeColor").colorValue = new Color(0.1f, 0.95f, 1f, 1f);
-            soCp.ApplyModifiedProperties();
-
-            // 3. Platform 5: Departure Platform (8 x 1 x 12, Z: 63 to 75, center Z = 69)
+            // 2. Platform 5: Departure Platform (8 x 1 x 12, Z: 63 to 75, center Z = 69)
             GameObject depPlat = GameObject.CreatePrimitive(PrimitiveType.Cube);
             depPlat.name = "Platform_05_Section3_Departure";
             depPlat.transform.SetParent(sec3Root.transform);
@@ -885,7 +927,10 @@ namespace Voidbound.Editor
             soSecTrigger.FindProperty("sectionName").stringValue = "Section 4: Spike Path";
             soSecTrigger.ApplyModifiedProperties();
 
-            // 2. Segment 4.1: Transition Apron & Narrow Traversal Bridge (Z: 107 to 123)
+            // 2. Checkpoint 1 Relocated to Section 4 Entrance (Z = 107.5)
+            CreateCheckpoint01AtSection4(sec4Root.transform, stoneMat, neonMat);
+
+            // 3. Segment 4.1: Transition Apron & Narrow Traversal Bridge (Z: 107 to 123)
             CreateWalkwayPlatform(sec4Root.transform, "Platform_07_Section4_Apron", new Vector3(0f, -0.5f, 109f), new Vector3(4.5f, 1f, 4f), stoneMat, darkTrimMat, neonMat);
             CreateNarrowBridgeSegment(sec4Root.transform, "Bridge_Narrow_01", new Vector3(0f, -0.5f, 117f), new Vector3(2.2f, 1f, 12f), stoneMat, darkTrimMat, neonMat);
 
@@ -1054,6 +1099,463 @@ namespace Voidbound.Editor
 
             // Gateway Arch transitioning to Section 6 at Z = 226.5
             CreateGatewayArch(sec5Root.transform, new Vector3(0f, 0f, 226.5f), stoneMat, neonMat);
+        }
+
+        private static GameObject CreateCheckpoint01AtSection4(Transform parent, Material stoneMat, Material neonMat)
+        {
+            GameObject cpObj = new GameObject("Checkpoint_01");
+            cpObj.transform.SetParent(parent);
+            cpObj.transform.position = new Vector3(0f, 0f, 107.5f);
+            BoxCollider cpCol = cpObj.AddComponent<BoxCollider>();
+            cpCol.isTrigger = true;
+            cpCol.center = new Vector3(0f, 1.5f, 0f);
+            cpCol.size = new Vector3(6f, 3.5f, 2.0f);
+
+            GameObject spawnPointObj = new GameObject("SpawnPoint");
+            spawnPointObj.transform.SetParent(cpObj.transform);
+            spawnPointObj.transform.position = new Vector3(0f, 0.1f, 107.5f);
+            spawnPointObj.transform.rotation = Quaternion.identity;
+
+            // Visual Checkpoint Monument placed at X = -1.8, Z = 108.0 (prominently visible, clear of central walking path)
+            GameObject cpPedestal = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            cpPedestal.name = "CheckpointPedestal";
+            cpPedestal.transform.SetParent(cpObj.transform);
+            cpPedestal.transform.localPosition = new Vector3(-1.8f, 0.4f, 0.5f);
+            cpPedestal.transform.localScale = new Vector3(0.8f, 0.4f, 0.8f);
+            cpPedestal.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            GameObject cpDiamond = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cpDiamond.name = "CheckpointIndicator";
+            cpDiamond.transform.SetParent(cpObj.transform);
+            cpDiamond.transform.localPosition = new Vector3(-1.8f, 1.4f, 0.5f);
+            cpDiamond.transform.localRotation = Quaternion.Euler(45f, 45f, 45f);
+            cpDiamond.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            Renderer cpRenderer = cpDiamond.GetComponent<Renderer>();
+            cpRenderer.sharedMaterial = neonMat;
+            Object.DestroyImmediate(cpDiamond.GetComponent<Collider>());
+
+            GameObject cpLightObj = new GameObject("CheckpointLight");
+            cpLightObj.transform.SetParent(cpObj.transform);
+            cpLightObj.transform.localPosition = new Vector3(-1.8f, 1.4f, 0.5f);
+            Light cpLight = cpLightObj.AddComponent<Light>();
+            cpLight.type = LightType.Point;
+            cpLight.color = neonMat.color;
+            cpLight.range = 5.0f;
+            cpLight.intensity = 0.6f;
+
+            Checkpoint cpComp = cpObj.AddComponent<Checkpoint>();
+            SerializedObject soCp = new SerializedObject(cpComp);
+            soCp.FindProperty("checkpointName").stringValue = "Checkpoint 1";
+            soCp.FindProperty("sectionName").stringValue = "Section 4: Spike Path";
+            soCp.FindProperty("spawnPointOverride").objectReferenceValue = spawnPointObj.transform;
+            soCp.FindProperty("indicatorRenderer").objectReferenceValue = cpRenderer;
+            soCp.FindProperty("indicatorLight").objectReferenceValue = cpLight;
+            soCp.FindProperty("inactiveColor").colorValue = new Color(0.3f, 0.3f, 0.4f, 1f);
+            soCp.FindProperty("activeColor").colorValue = new Color(0.1f, 0.95f, 1f, 1f);
+            soCp.ApplyModifiedProperties();
+
+            return cpObj;
+        }
+
+        private static GameObject CreateCheckpoint02AtSection6(Transform parent, Material stoneMat, Material neonMat)
+        {
+            GameObject cpObj = new GameObject("Checkpoint_02");
+            cpObj.transform.SetParent(parent);
+            cpObj.transform.position = new Vector3(0f, 0f, 228.0f);
+            BoxCollider cpCol = cpObj.AddComponent<BoxCollider>();
+            cpCol.isTrigger = true;
+            cpCol.center = new Vector3(0f, 1.5f, 0f);
+            cpCol.size = new Vector3(7.6f, 3.5f, 2.5f);
+
+            GameObject spawnPointObj = new GameObject("SpawnPoint");
+            spawnPointObj.transform.SetParent(cpObj.transform);
+            spawnPointObj.transform.position = new Vector3(0f, 0.1f, 228.0f);
+            spawnPointObj.transform.rotation = Quaternion.identity;
+
+            // Visual Checkpoint Monument placed at X = -2.2, Z = 228.5 (prominently visible, clear of central walking path)
+            GameObject cpPedestal = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            cpPedestal.name = "CheckpointPedestal";
+            cpPedestal.transform.SetParent(cpObj.transform);
+            cpPedestal.transform.localPosition = new Vector3(-2.2f, 0.4f, 0.5f);
+            cpPedestal.transform.localScale = new Vector3(0.8f, 0.4f, 0.8f);
+            cpPedestal.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            GameObject cpDiamond = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cpDiamond.name = "CheckpointIndicator";
+            cpDiamond.transform.SetParent(cpObj.transform);
+            cpDiamond.transform.localPosition = new Vector3(-2.2f, 1.4f, 0.5f);
+            cpDiamond.transform.localRotation = Quaternion.Euler(45f, 45f, 45f);
+            cpDiamond.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            Renderer cpRenderer = cpDiamond.GetComponent<Renderer>();
+            cpRenderer.sharedMaterial = neonMat;
+            Object.DestroyImmediate(cpDiamond.GetComponent<Collider>());
+
+            GameObject cpLightObj = new GameObject("CheckpointLight");
+            cpLightObj.transform.SetParent(cpObj.transform);
+            cpLightObj.transform.localPosition = new Vector3(-2.2f, 1.4f, 0.5f);
+            Light cpLight = cpLightObj.AddComponent<Light>();
+            cpLight.type = LightType.Point;
+            cpLight.color = neonMat.color;
+            cpLight.range = 5.0f;
+            cpLight.intensity = 0.6f;
+
+            Checkpoint cpComp = cpObj.AddComponent<Checkpoint>();
+            SerializedObject soCp = new SerializedObject(cpComp);
+            soCp.FindProperty("checkpointName").stringValue = "Checkpoint 2";
+            soCp.FindProperty("sectionName").stringValue = "Section 6: Physics Chamber";
+            soCp.FindProperty("spawnPointOverride").objectReferenceValue = spawnPointObj.transform;
+            soCp.FindProperty("indicatorRenderer").objectReferenceValue = cpRenderer;
+            soCp.FindProperty("indicatorLight").objectReferenceValue = cpLight;
+            soCp.FindProperty("inactiveColor").colorValue = new Color(0.3f, 0.3f, 0.4f, 1f);
+            soCp.FindProperty("activeColor").colorValue = new Color(0.1f, 0.95f, 1f, 1f);
+            soCp.ApplyModifiedProperties();
+
+            return cpObj;
+        }
+
+        private static void CreateSection06PhysicsChamber(Transform parent, Material stoneMat, Material neonMat, Material darkTrimMat, Material crateMat, Material doorMat, Material lockedMat, Material unlockedMat)
+        {
+            GameObject sec6Root = new GameObject("Section_06_PhysicsChamber");
+            sec6Root.transform.SetParent(parent);
+
+            // 1. Entrance Trigger at Z = 227.5
+            GameObject triggerObj = new GameObject("Section_06_Entrance_Trigger");
+            triggerObj.transform.SetParent(sec6Root.transform);
+            triggerObj.transform.position = new Vector3(0f, 1.5f, 227.5f);
+            BoxCollider triggerCol = triggerObj.AddComponent<BoxCollider>();
+            triggerCol.isTrigger = true;
+            triggerCol.size = new Vector3(8f, 3.5f, 1.5f);
+            SectionTrigger secTrigger = triggerObj.AddComponent<SectionTrigger>();
+            SerializedObject soSecTrigger = new SerializedObject(secTrigger);
+            soSecTrigger.FindProperty("sectionName").stringValue = "Section 6: Physics Chamber";
+            soSecTrigger.ApplyModifiedProperties();
+
+            // 2. Checkpoint 2 at Section 6 Entrance (Z = 228.0)
+            CreateCheckpoint02AtSection6(sec6Root.transform, stoneMat, neonMat);
+
+            // 3. Entrance Platform (Platform_15_Section6_Entrance): scale 10 x 1 x 6, center (0, -0.5, 230)
+            CreateWalkwayPlatform(sec6Root.transform, "Platform_15_Section6_Entrance", new Vector3(0f, -0.5f, 230f), new Vector3(10f, 1f, 6f), stoneMat, darkTrimMat, neonMat);
+            CreatePillar(sec6Root.transform, new Vector3(-4.8f, 1.5f, 228f), stoneMat, darkTrimMat);
+            CreatePillar(sec6Root.transform, new Vector3(4.8f, 1.5f, 228f), stoneMat, darkTrimMat);
+
+            // 4. Chamber Main Floor (Z: 233 to 264, center 248.5, length 31m, width 16m)
+            GameObject chamberFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            chamberFloor.name = "Chamber_Floor";
+            chamberFloor.transform.SetParent(sec6Root.transform);
+            chamberFloor.transform.position = new Vector3(0f, -0.5f, 248.5f);
+            chamberFloor.transform.localScale = new Vector3(16f, 1f, 31f);
+            chamberFloor.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            // Floor trims
+            CreateTrim(chamberFloor.transform, new Vector3(-0.495f, 0.51f, 0f), new Vector3(0.01f, 0.02f, 0.99f), darkTrimMat);
+            CreateTrim(chamberFloor.transform, new Vector3(0.495f, 0.51f, 0f), new Vector3(0.01f, 0.02f, 0.99f), darkTrimMat);
+            CreateTrim(chamberFloor.transform, new Vector3(0f, 0.51f, -0.495f), new Vector3(0.99f, 0.02f, 0.01f), neonMat); // Entrance seam
+            CreateTrim(chamberFloor.transform, new Vector3(0f, 0.51f, 0.495f), new Vector3(0.99f, 0.02f, 0.01f), neonMat);  // Door seam
+
+            // Central floor divider line
+            CreateTrim(chamberFloor.transform, new Vector3(0f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.7f), darkTrimMat);
+
+            // 5. Chamber Walls (Height 5m, thickness 0.4m)
+            GameObject leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leftWall.name = "Wall_Left";
+            leftWall.transform.SetParent(sec6Root.transform);
+            leftWall.transform.position = new Vector3(-8.2f, 2.5f, 248.5f);
+            leftWall.transform.localScale = new Vector3(0.4f, 5f, 31f);
+            leftWall.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+            GameObject rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rightWall.name = "Wall_Right";
+            rightWall.transform.SetParent(sec6Root.transform);
+            rightWall.transform.position = new Vector3(8.2f, 2.5f, 248.5f);
+            rightWall.transform.localScale = new Vector3(0.4f, 5f, 31f);
+            rightWall.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+            // Wall Trim Ribs (Neon horizontal stripes along walls)
+            CreateTrim(leftWall.transform, new Vector3(0.55f, 0f, 0f), new Vector3(0.1f, 0.04f, 0.98f), neonMat);
+            CreateTrim(rightWall.transform, new Vector3(-0.55f, 0f, 0f), new Vector3(0.1f, 0.04f, 0.98f), neonMat);
+
+            // Decorative Pillars along walls
+            float[] pillarZ = { 236f, 244f, 252f, 260f };
+            for (int i = 0; i < pillarZ.Length; i++)
+            {
+                CreatePillar(sec6Root.transform, new Vector3(-7.8f, 2.5f, pillarZ[i]), stoneMat, darkTrimMat);
+                CreatePillar(sec6Root.transform, new Vector3(7.8f, 2.5f, pillarZ[i]), stoneMat, darkTrimMat);
+            }
+
+            // Central Divider Pillars (providing distinct Left and Right puzzle bays)
+            CreatePillar(sec6Root.transform, new Vector3(0f, 1.5f, 242f), stoneMat, neonMat);
+            CreatePillar(sec6Root.transform, new Vector3(0f, 1.5f, 250f), stoneMat, neonMat);
+
+            // Chamber Sci-Fi Atmospheric Lighting
+            CreatePointLight(sec6Root.transform, "ChamberLight_Left", new Vector3(-4.5f, 3.5f, 246f), new Color(0.2f, 0.7f, 1.0f), 12f, 1.8f);
+            CreatePointLight(sec6Root.transform, "ChamberLight_Right", new Vector3(4.5f, 3.5f, 246f), new Color(0.2f, 0.7f, 1.0f), 12f, 1.8f);
+
+            // 6. Pushable Crates
+            // Crate Left: Start at (-4.5, 0.65, 239.0)
+            GameObject crateLeftObj = CreatePushableCrate(sec6Root.transform, "Crate_Left", new Vector3(-4.5f, 0.65f, 239.0f), new Vector3(1.3f, 1.3f, 1.3f), crateMat, neonMat);
+            PushableCrate crateLeft = crateLeftObj.GetComponent<PushableCrate>();
+
+            // Crate Right: Start at (4.5, 0.65, 239.0)
+            GameObject crateRightObj = CreatePushableCrate(sec6Root.transform, "Crate_Right", new Vector3(4.5f, 0.65f, 239.0f), new Vector3(1.3f, 1.3f, 1.3f), crateMat, neonMat);
+            PushableCrate crateRight = crateRightObj.GetComponent<PushableCrate>();
+
+            // 7. Crate Pressure Plates
+            // Plate Left: at (-4.5, 0.0, 255.0)
+            GameObject plateLeftObj = CreateCratePressurePlate(sec6Root.transform, "Plate_Left", new Vector3(-4.5f, 0.0f, 255.0f), darkTrimMat, neonMat);
+            CratePressurePlate plateLeft = plateLeftObj.GetComponent<CratePressurePlate>();
+
+            // Plate Right: at (4.5, 0.0, 255.0)
+            GameObject plateRightObj = CreateCratePressurePlate(sec6Root.transform, "Plate_Right", new Vector3(4.5f, 0.0f, 255.0f), darkTrimMat, neonMat);
+            CratePressurePlate plateRight = plateRightObj.GetComponent<CratePressurePlate>();
+
+            // 8. Crate Reset Terminal at (0, 0, 235.0) near entrance
+            CreateCrateResetTerminal(sec6Root.transform, new Vector3(0f, 0f, 235.0f), stoneMat, darkTrimMat, neonMat, new PushableCrate[] { crateLeft, crateRight });
+
+            // 9. Exit Partition Wall and Puzzle Blast Door at Z = 263.0
+            CreatePuzzleExitDoor(sec6Root.transform, stoneMat, darkTrimMat, doorMat, lockedMat, unlockedMat, plateLeft, plateRight);
+
+            // 10. Exit Transition Platform (Platform_16_Section6_Exit) spanning Z: 264 to 274 (center 269.0)
+            CreateWalkwayPlatform(sec6Root.transform, "Platform_16_Section6_Exit", new Vector3(0f, -0.5f, 269f), new Vector3(8f, 1f, 10f), stoneMat, darkTrimMat, neonMat);
+            CreatePillar(sec6Root.transform, new Vector3(-3.8f, 1.5f, 266f), stoneMat, darkTrimMat);
+            CreatePillar(sec6Root.transform, new Vector3(3.8f, 1.5f, 266f), stoneMat, darkTrimMat);
+            CreatePillar(sec6Root.transform, new Vector3(-3.8f, 1.5f, 273f), stoneMat, darkTrimMat);
+            CreatePillar(sec6Root.transform, new Vector3(3.8f, 1.5f, 273f), stoneMat, darkTrimMat);
+
+            // Gateway Arch marking Section 6 exit boundary at Z = 273.5
+            CreateGatewayArch(sec6Root.transform, new Vector3(0f, 0f, 273.5f), stoneMat, neonMat);
+        }
+
+        private static GameObject CreatePushableCrate(Transform parent, string name, Vector3 pos, Vector3 size, Material crateMat, Material accentMat)
+        {
+            GameObject crateObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            crateObj.name = name;
+            crateObj.transform.SetParent(parent);
+            crateObj.transform.position = pos;
+            crateObj.transform.localScale = size;
+            crateObj.GetComponent<Renderer>().sharedMaterial = crateMat;
+
+            // Sci-fi accent band on crate
+            GameObject band = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            band.name = "AccentBand";
+            band.transform.SetParent(crateObj.transform);
+            band.transform.localPosition = Vector3.zero;
+            band.transform.localScale = new Vector3(1.02f, 0.25f, 1.02f);
+            band.GetComponent<Renderer>().sharedMaterial = accentMat;
+            Object.DestroyImmediate(band.GetComponent<Collider>());
+
+            Rigidbody rb = crateObj.AddComponent<Rigidbody>();
+            rb.mass = 25.0f;
+            rb.linearDamping = 4.0f;
+            rb.angularDamping = 5.0f;
+            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+            PushableCrate crateComp = crateObj.AddComponent<PushableCrate>();
+            return crateObj;
+        }
+
+        private static GameObject CreateCratePressurePlate(Transform parent, string name, Vector3 pos, Material housingMat, Material neonMat)
+        {
+            GameObject plateObj = new GameObject(name);
+            plateObj.transform.SetParent(parent);
+            plateObj.transform.position = pos;
+
+            // Base housing
+            GameObject housing = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            housing.name = "BaseHousing";
+            housing.transform.SetParent(plateObj.transform);
+            housing.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+            housing.transform.localScale = new Vector3(2.4f, 0.06f, 2.4f);
+            housing.GetComponent<Renderer>().sharedMaterial = housingMat;
+            Object.DestroyImmediate(housing.GetComponent<Collider>());
+
+            // Depressible pad
+            GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pad.name = "PlatePad";
+            pad.transform.SetParent(plateObj.transform);
+            pad.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            pad.transform.localScale = new Vector3(2.0f, 0.06f, 2.0f);
+            Renderer padRenderer = pad.GetComponent<Renderer>();
+            padRenderer.sharedMaterial = neonMat;
+            Object.DestroyImmediate(pad.GetComponent<Collider>());
+
+            // Trigger collider for crate detection
+            BoxCollider triggerCol = plateObj.AddComponent<BoxCollider>();
+            triggerCol.isTrigger = true;
+            triggerCol.center = new Vector3(0f, 0.35f, 0f);
+            triggerCol.size = new Vector3(2.2f, 0.7f, 2.2f);
+
+            // Light
+            GameObject lightObj = new GameObject("PlateLight");
+            lightObj.transform.SetParent(plateObj.transform);
+            lightObj.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+            Light plateLight = lightObj.AddComponent<Light>();
+            plateLight.type = LightType.Point;
+            plateLight.color = new Color(0.15f, 0.45f, 0.6f);
+            plateLight.range = 3.5f;
+            plateLight.intensity = 0.5f;
+
+            CratePressurePlate plateComp = plateObj.AddComponent<CratePressurePlate>();
+            SerializedObject so = new SerializedObject(plateComp);
+            so.FindProperty("platePad").objectReferenceValue = pad.transform;
+            so.FindProperty("plateRenderer").objectReferenceValue = padRenderer;
+            so.FindProperty("plateLight").objectReferenceValue = plateLight;
+            so.FindProperty("depressDistance").floatValue = 0.08f;
+            so.FindProperty("depressSpeed").floatValue = 8.0f;
+            so.FindProperty("inactiveColor").colorValue = new Color(0.15f, 0.45f, 0.6f, 1f);
+            so.FindProperty("activeColor").colorValue = new Color(0.1f, 0.95f, 0.4f, 1f);
+            so.ApplyModifiedProperties();
+
+            return plateObj;
+        }
+
+        private static GameObject CreatePuzzleExitDoor(Transform parent, Material stoneMat, Material darkTrimMat, Material doorMat, Material lockedMat, Material unlockedMat, CratePressurePlate plateLeft, CratePressurePlate plateRight)
+        {
+            GameObject doorRoot = new GameObject("Door_Exit_Puzzle");
+            doorRoot.transform.SetParent(parent);
+            doorRoot.transform.position = new Vector3(0f, 0f, 263.0f);
+
+            // Left wall partition
+            GameObject wallL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wallL.name = "ExitWall_Left";
+            wallL.transform.SetParent(doorRoot.transform);
+            wallL.transform.localPosition = new Vector3(-5.5f, 2.5f, 0f);
+            wallL.transform.localScale = new Vector3(5f, 5f, 0.6f);
+            wallL.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            // Right wall partition
+            GameObject wallR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wallR.name = "ExitWall_Right";
+            wallR.transform.SetParent(doorRoot.transform);
+            wallR.transform.localPosition = new Vector3(5.5f, 2.5f, 0f);
+            wallR.transform.localScale = new Vector3(5f, 5f, 0.6f);
+            wallR.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            // Lintel Header above doorway
+            GameObject lintel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            lintel.name = "DoorLintel";
+            lintel.transform.SetParent(doorRoot.transform);
+            lintel.transform.localPosition = new Vector3(0f, 4.2f, 0f);
+            lintel.transform.localScale = new Vector3(6f, 1.6f, 0.6f);
+            lintel.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+            // Dual sliding blast door leaves
+            // Left leaf: closed at (-1.5, 1.7, 0)
+            GameObject leafL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leafL.name = "DoorLeaf_Left";
+            leafL.transform.SetParent(doorRoot.transform);
+            leafL.transform.localPosition = new Vector3(-1.5f, 1.7f, 0f);
+            leafL.transform.localScale = new Vector3(3.05f, 3.4f, 0.35f);
+            leafL.GetComponent<Renderer>().sharedMaterial = doorMat;
+            BoxCollider colL = leafL.GetComponent<BoxCollider>();
+
+            // Right leaf: closed at (1.5, 1.7, 0)
+            GameObject leafR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leafR.name = "DoorLeaf_Right";
+            leafR.transform.SetParent(doorRoot.transform);
+            leafR.transform.localPosition = new Vector3(1.5f, 1.7f, 0f);
+            leafR.transform.localScale = new Vector3(3.05f, 3.4f, 0.35f);
+            leafR.GetComponent<Renderer>().sharedMaterial = doorMat;
+            BoxCollider colR = leafR.GetComponent<BoxCollider>();
+
+            // Status Indicator Diamond/Panel above door
+            GameObject indicator = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            indicator.name = "DoorStatusIndicator";
+            indicator.transform.SetParent(doorRoot.transform);
+            indicator.transform.localPosition = new Vector3(0f, 3.6f, -0.32f);
+            indicator.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            indicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.08f);
+            Renderer indRenderer = indicator.GetComponent<Renderer>();
+            indRenderer.sharedMaterial = lockedMat;
+            Object.DestroyImmediate(indicator.GetComponent<Collider>());
+
+            // Status Light
+            GameObject lightObj = new GameObject("DoorStatusLight");
+            lightObj.transform.SetParent(doorRoot.transform);
+            lightObj.transform.localPosition = new Vector3(0f, 3.6f, -0.6f);
+            Light statusLight = lightObj.AddComponent<Light>();
+            statusLight.type = LightType.Point;
+            statusLight.color = new Color(1.0f, 0.15f, 0.15f);
+            statusLight.range = 5.0f;
+            statusLight.intensity = 1.5f;
+
+            // PuzzleDoor script
+            PuzzleDoor doorComp = doorRoot.AddComponent<PuzzleDoor>();
+            SerializedObject so = new SerializedObject(doorComp);
+            so.FindProperty("plateLeft").objectReferenceValue = plateLeft;
+            so.FindProperty("plateRight").objectReferenceValue = plateRight;
+            so.FindProperty("doorLeafLeft").objectReferenceValue = leafL.transform;
+            so.FindProperty("doorLeafRight").objectReferenceValue = leafR.transform;
+            so.FindProperty("doorColliderLeft").objectReferenceValue = colL;
+            so.FindProperty("doorColliderRight").objectReferenceValue = colR;
+            so.FindProperty("statusRenderer").objectReferenceValue = indRenderer;
+            so.FindProperty("statusLight").objectReferenceValue = statusLight;
+            so.FindProperty("lockedColor").colorValue = new Color(1.0f, 0.15f, 0.15f, 1f);
+            so.FindProperty("unlockedColor").colorValue = new Color(0.1f, 0.95f, 0.4f, 1f);
+            so.FindProperty("slideDistance").floatValue = 3.0f;
+            so.FindProperty("slideSpeed").floatValue = 3.5f;
+            so.FindProperty("stayOpenOnceUnlocked").boolValue = true;
+            so.ApplyModifiedProperties();
+
+            return doorRoot;
+        }
+
+        private static GameObject CreateCrateResetTerminal(Transform parent, Vector3 pos, Material stoneMat, Material trimMat, Material screenMat, PushableCrate[] crates)
+        {
+            GameObject terminalObj = new GameObject("Crate_Reset_Terminal");
+            terminalObj.transform.SetParent(parent);
+            terminalObj.transform.position = pos;
+
+            // Pedestal
+            GameObject pedestal = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pedestal.name = "Pedestal";
+            pedestal.transform.SetParent(terminalObj.transform);
+            pedestal.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+            pedestal.transform.localScale = new Vector3(0.6f, 0.5f, 0.6f);
+            pedestal.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            // Console Head
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            head.name = "ConsoleHead";
+            head.transform.SetParent(terminalObj.transform);
+            head.transform.localPosition = new Vector3(0f, 1.05f, 0f);
+            head.transform.localScale = new Vector3(0.7f, 0.35f, 0.5f);
+            head.GetComponent<Renderer>().sharedMaterial = trimMat;
+
+            // Screen
+            GameObject screen = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            screen.name = "Screen";
+            screen.transform.SetParent(terminalObj.transform);
+            screen.transform.localPosition = new Vector3(0f, 1.15f, -0.15f);
+            screen.transform.localRotation = Quaternion.Euler(-25f, 0f, 0f);
+            screen.transform.localScale = new Vector3(0.5f, 0.25f, 0.05f);
+            screen.GetComponent<Renderer>().sharedMaterial = screenMat;
+            Object.DestroyImmediate(screen.GetComponent<Collider>());
+
+            // Trigger collider for player interaction
+            BoxCollider col = terminalObj.AddComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.center = new Vector3(0f, 1f, 0f);
+            col.size = new Vector3(2.5f, 2.5f, 2.5f);
+
+            CrateResetTerminal termComp = terminalObj.AddComponent<CrateResetTerminal>();
+            termComp.SetCrates(crates);
+
+            return terminalObj;
+        }
+
+        private static GameObject CreatePointLight(Transform parent, string name, Vector3 pos, Color color, float range, float intensity)
+        {
+            GameObject lightObj = new GameObject(name);
+            lightObj.transform.SetParent(parent);
+            lightObj.transform.position = pos;
+            Light light = lightObj.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = color;
+            light.range = range;
+            light.intensity = intensity;
+            return lightObj;
         }
 
         private static GameObject CreateWalkwayPlatform(Transform parent, string name, Vector3 pos, Vector3 scale, Material stoneMat, Material trimMat, Material neonMat)

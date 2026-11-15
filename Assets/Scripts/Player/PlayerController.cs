@@ -332,6 +332,26 @@ namespace Voidbound.Player
             {
                 hammerKnockback.ApplyPush(gameObject);
             }
+
+            // Push physics crates and dynamic Rigidbodies
+            if (hit.moveDirection.y > -0.3f)
+            {
+                var crate = hit.collider.GetComponentInParent<Voidbound.Interactions.PushableCrate>();
+                if (crate != null)
+                {
+                    float currentSpeed = (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed) ? sprintSpeed : walkSpeed;
+                    crate.HandlePush(hit, currentSpeed);
+                }
+                else
+                {
+                    Rigidbody rb = hit.collider.attachedRigidbody;
+                    if (rb != null && !rb.isKinematic)
+                    {
+                        Vector3 pushDir = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z).normalized;
+                        rb.AddForce(pushDir * 15f, ForceMode.Force);
+                    }
+                }
+            }
         }
 
         private void OnRespawnRequested(Vector3 targetPosition, Quaternion targetRotation)

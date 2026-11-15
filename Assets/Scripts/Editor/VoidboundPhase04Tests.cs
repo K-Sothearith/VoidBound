@@ -174,7 +174,7 @@ namespace Voidbound.Editor
                 var pdhStart = typeof(PlayerDeathHandler).GetMethod("Start", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 pdhStart?.Invoke(playerDeathHandler, null);
 
-                // Activate Checkpoint 1 (at Z = 65.0) as would happen naturally in Section 3
+                // Activate Checkpoint 1 (relocated to Section 4 entrance at Z ≈ 107.5)
                 Checkpoint cp1 = allCheckpoints[0];
                 var cpAwake = typeof(Checkpoint).GetMethod("Awake", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 cpAwake?.Invoke(cp1, null);
@@ -185,7 +185,7 @@ namespace Voidbound.Editor
                 var cpTrigger = typeof(Checkpoint).GetMethod("OnTriggerEnter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 cpTrigger?.Invoke(cp1, new object[] { playerCC });
                 Assert(gm.HasCustomCheckpoint, "Checkpoint 1 Activated Test", "Checkpoint 1 active as base respawn point for Sections 4 and 5");
-                Assert(Mathf.Approximately(gm.ActiveCheckpointPosition.z, 65.0f), "Respawn Anchor Z Test",
+                Assert(Mathf.Approximately(gm.ActiveCheckpointPosition.z, cp1.RespawnPosition.z), "Respawn Anchor Z Test",
                     $"Active respawn anchor is Z={gm.ActiveCheckpointPosition.z:F1} (Checkpoint 1)");
 
                 // 11. Spike Lethality & Single-Death Debounce Test
@@ -197,7 +197,7 @@ namespace Voidbound.Editor
 
                 Assert(shNarrow1.HasKilled, "Spike Lethal Trigger Test", "Spike marked as hasKilled upon collision");
                 Assert(gm.CurrentLives == 2, "Spike Death Life Deduction Test", $"Lives reduced to {gm.CurrentLives} on spike collision");
-                Assert(Mathf.Approximately(player.transform.position.z, 65.0f), "Spike Respawn at Checkpoint 1 Test",
+                Assert(Mathf.Approximately(player.transform.position.z, cp1.RespawnPosition.z), "Spike Respawn at Checkpoint 1 Test",
                     $"Player respawned at Checkpoint 1 Z={player.transform.position.z:F1} (NOT Section 1)");
 
                 // Debounce test: secondary immediate call while hasKilled or isDead must NOT double-deduct life
@@ -248,7 +248,7 @@ namespace Voidbound.Editor
                 // Player contact while Active -> Immediate Death
                 laser1.ProcessHit(player);
                 Assert(gm.CurrentLives == 1, "Laser Active Lethal Kill Test", $"Active laser reduced lives to {gm.CurrentLives}");
-                Assert(Mathf.Approximately(player.transform.position.z, 65.0f), "Laser Respawn at Checkpoint 1 Test",
+                Assert(Mathf.Approximately(player.transform.position.z, cp1.RespawnPosition.z), "Laser Respawn at Checkpoint 1 Test",
                     $"Player respawned at Checkpoint 1 Z={player.transform.position.z:F1}");
 
                 isRespawningField?.SetValue(gm, false);
@@ -311,7 +311,7 @@ namespace Voidbound.Editor
                 // Turrets are ALWAYS lethal (never turn off)
                 turret1.ProcessHit(player);
                 Assert(gm.CurrentLives == 2, "Turret Lethal Kill Test", $"Turret contact reduced lives to {gm.CurrentLives}");
-                Assert(Mathf.Approximately(player.transform.position.z, 65.0f), "Turret Respawn at Checkpoint 1 Test",
+                Assert(Mathf.Approximately(player.transform.position.z, cp1.RespawnPosition.z), "Turret Respawn at Checkpoint 1 Test",
                     $"Player respawned at Checkpoint 1 Z={player.transform.position.z:F1}");
 
                 isRespawningField?.SetValue(gm, false);
@@ -335,7 +335,7 @@ namespace Voidbound.Editor
                 pdhIsDead?.SetValue(playerDeathHandler, false);
                 kv.TriggerKill(player);
                 Assert(gm.CurrentLives == 1, "Section 4 Void Fall Death Test", $"Falling into void reduced lives to {gm.CurrentLives}");
-                Assert(Mathf.Approximately(player.transform.position.z, 65.0f), "Void Fall Respawn at Checkpoint 1 Test",
+                Assert(Mathf.Approximately(player.transform.position.z, cp1.RespawnPosition.z), "Void Fall Respawn at Checkpoint 1 Test",
                     $"Player respawned at Checkpoint 1 Z={player.transform.position.z:F1}");
 
                 // Final void fall consumes last life -> GameOver
