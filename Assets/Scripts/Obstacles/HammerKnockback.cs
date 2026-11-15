@@ -95,11 +95,6 @@ namespace Voidbound.Obstacles
 
                 Vector3 knockbackImpulse = pushDir * horizontalKnockback + Vector3.up * upwardLift;
                 pc.AddKnockback(knockbackImpulse);
-
-                if (GameManager.Instance != null)
-                {
-                    GameManager.Instance.ShowNotification("Knocked by Hammer!", 1.2f);
-                }
             }
         }
     }

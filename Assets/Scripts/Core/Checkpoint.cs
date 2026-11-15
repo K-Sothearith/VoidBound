@@ -18,6 +18,9 @@ namespace Voidbound.Core
 
         private bool isActivated;
 
+        public bool IsActivated => isActivated;
+        public string CheckpointName => checkpointName;
+        public string SectionName => sectionName;
         public Vector3 RespawnPosition => spawnPointOverride != null ? spawnPointOverride.position : transform.position;
         public Quaternion RespawnRotation => spawnPointOverride != null ? spawnPointOverride.rotation : transform.rotation;
 
@@ -29,6 +32,22 @@ namespace Voidbound.Core
                 col.isTrigger = true;
             }
             UpdateVisuals(false);
+        }
+
+        private void Start()
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnGameReset += ResetCheckpoint;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnGameReset -= ResetCheckpoint;
+            }
         }
 
         private void OnTriggerEnter(Collider other)

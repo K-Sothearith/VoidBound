@@ -10,9 +10,13 @@ namespace Voidbound.Player
         [Header("Movement Settings")]
         [SerializeField] private float walkSpeed = 6.0f;
         [SerializeField] private float sprintSpeed = 9.5f;
-        [SerializeField] private float jumpHeight = 1.6f;
+        [Tooltip("Jump apex height in meters. 1.8m gives a comfortable, athletic jump arc.")]
+        [SerializeField] private float jumpHeight = 1.8f;
+        [Tooltip("Platforming gravity for jumps above platforms.")]
         [SerializeField] private float gravity = -20.0f;
-        [SerializeField] private float groundCheckOffset = 0.1f;
+        [Tooltip("Accelerated gravity applied when the player falls into the void below platform level.")]
+        [SerializeField] private float voidGravity = -45.0f;
+        [SerializeField] private float maxFallSpeed = -50.0f;
 
         [Header("Look Settings")]
         [SerializeField] private Transform cameraTransform;
@@ -37,6 +41,12 @@ namespace Voidbound.Player
         private bool wasGroundedLastFrame;
         private bool isInputEnabled = true;
 
+        // Platform Riding State
+        private Voidbound.Interactions.MovingPlatform currentMovingPlatform;
+        private Voidbound.Interactions.MovingPlatform activePlatform;
+        private float lastPlatformHitTime;
+        private Vector3 lastPlatformPos;
+
         public bool IsGrounded => isGrounded;
         public Vector3 CurrentVelocity => characterController != null ? characterController.velocity : Vector3.zero;
         public Vector3 CurrentKnockback => knockbackVelocity;
@@ -58,6 +68,20 @@ namespace Voidbound.Player
             {
                 Camera cam = GetComponentInChildren<Camera>();
                 if (cam != null) cameraTransform = cam.transform;
+            }
+
+            // Ensure smooth jump traversal if serialized values in scene were extreme
+            if (gravity < -28.0f || gravity > -12.0f)
+            {
+                gravity = -20.0f;
+            }
+            if (jumpHeight < 1.7f)
+            {
+                jumpHeight = 1.8f;
+            }
+            if (voidGravity > -30.0f)
+            {
+                voidGravity = -45.0f;
             }
         }
 
@@ -116,8 +140,45 @@ namespace Voidbound.Player
 
         private void HandleMovement()
         {
-            isGrounded = characterController.isGrounded || Physics.CheckSphere(transform.position + Vector3.up * groundCheckOffset, characterController.radius * 0.85f, ~0, QueryTriggerInteraction.Ignore);
-            if (isGrounded && velocity.y < 0)
+            // Reliable native CharacterController ground check (no self-colliding queries)
+            isGrounded = characterController.isGrounded;
+
+            // Moving Platform Tracking
+            Voidbound.Interactions.MovingPlatform standingPlatform = null;
+            if (isGrounded && activePlatform != null && (Time.time - lastPlatformHitTime) < 0.15f)
+            {
+                standingPlatform = activePlatform;
+            }
+            else if (!isGrounded)
+            {
+                activePlatform = null;
+            }
+
+            Vector3 platformDelta = Vector3.zero;
+            if (standingPlatform != null)
+            {
+                if (currentMovingPlatform != standingPlatform)
+                {
+                    currentMovingPlatform = standingPlatform;
+                    lastPlatformPos = standingPlatform.transform.position;
+                    standingPlatform.SetRider(characterController);
+                }
+                else
+                {
+                    platformDelta = standingPlatform.transform.position - lastPlatformPos;
+                    lastPlatformPos = standingPlatform.transform.position;
+                }
+            }
+            else
+            {
+                if (currentMovingPlatform != null)
+                {
+                    currentMovingPlatform.RemoveRider(characterController);
+                    currentMovingPlatform = null;
+                }
+            }
+
+            if (isGrounded && velocity.y < 0f)
             {
                 // Small downward force to stay glued to surfaces
                 velocity.y = -2f;
@@ -147,7 +208,6 @@ namespace Voidbound.Player
             float targetSpeed = isSprinting ? sprintSpeed : walkSpeed;
             Vector3 moveDirection = (transform.forward * inputVector.y + transform.right * inputVector.x).normalized;
             Vector3 horizontalMovement = (moveDirection * targetSpeed + knockbackVelocity) * Time.deltaTime;
-            characterController.Move(horizontalMovement);
 
             // Damp knockback over time
             if (knockbackVelocity.sqrMagnitude > 0.01f)
@@ -159,19 +219,32 @@ namespace Voidbound.Player
                 knockbackVelocity = Vector3.zero;
             }
 
-            // Handle Jump
-            if (jumpPressed && isGrounded)
+            // Handle Jump: strictly requires isGrounded and velocity.y <= 0.1f (prevents any mid-air jump spam)
+            if (jumpPressed && isGrounded && velocity.y <= 0.1f)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2.0f * gravity);
+                isGrounded = false;
                 if (jumpSound != null && audioSource != null)
                 {
                     audioSource.PlayOneShot(jumpSound, 0.6f);
                 }
             }
 
-            // Apply gravity
-            velocity.y += gravity * Time.deltaTime;
-            characterController.Move(velocity * Time.deltaTime);
+            // Apply gravity: comfortable platforming arc above platforms, fast plunge below platform level
+            float activeGravity = gravity;
+            if (!isGrounded && velocity.y < 0f && transform.position.y < -0.3f)
+            {
+                activeGravity = voidGravity;
+            }
+            velocity.y += activeGravity * Time.deltaTime;
+            if (velocity.y < maxFallSpeed)
+            {
+                velocity.y = maxFallSpeed;
+            }
+
+            // Single unified Move call per frame for rock-solid stability and zero sliding
+            Vector3 totalMovement = horizontalMovement + platformDelta + Vector3.up * (velocity.y * Time.deltaTime);
+            characterController.Move(totalMovement);
 
             wasGroundedLastFrame = isGrounded;
         }
@@ -184,7 +257,16 @@ namespace Voidbound.Player
                 {
                     velocity.y = -2f;
                 }
-                velocity.y += gravity * Time.deltaTime;
+                float activeGravity = gravity;
+                if (!characterController.isGrounded && velocity.y < 0f && transform.position.y < -0.3f)
+                {
+                    activeGravity = voidGravity;
+                }
+                velocity.y += activeGravity * Time.deltaTime;
+                if (velocity.y < maxFallSpeed)
+                {
+                    velocity.y = maxFallSpeed;
+                }
                 characterController.Move(velocity * Time.deltaTime);
             }
         }
@@ -207,6 +289,9 @@ namespace Voidbound.Player
 
             velocity = Vector3.zero;
             knockbackVelocity = Vector3.zero;
+            isGrounded = false;
+            activePlatform = null;
+            currentMovingPlatform = null;
 
             if (characterController != null)
             {
@@ -226,6 +311,17 @@ namespace Voidbound.Player
 
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {
+            // Detect moving platform beneath feet (upward collision normal)
+            if (hit.normal.y > 0.5f)
+            {
+                var mp = hit.collider.GetComponentInParent<Voidbound.Interactions.MovingPlatform>();
+                if (mp != null)
+                {
+                    activePlatform = mp;
+                    lastPlatformHitTime = Time.time;
+                }
+            }
+
             var hammerKnockback = hit.collider.GetComponent<Voidbound.Obstacles.HammerKnockback>();
             if (hammerKnockback == null)
             {

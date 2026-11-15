@@ -105,11 +105,9 @@ namespace Voidbound.Editor
                     Assert(!terminal.IsActivated, "Terminal Interaction (Deactivate) Test", "Terminal toggled back to offline state");
                 }
 
-                // 8. Prototype Finish Marker Test
-                GameObject finishMarkerObj = GameObject.Find("Prototype_Finish_Marker");
-                PrototypeFinishMarker finishMarker = finishMarkerObj != null ? finishMarkerObj.GetComponent<PrototypeFinishMarker>() : null;
-                Collider markerCol = finishMarkerObj != null ? finishMarkerObj.GetComponent<Collider>() : null;
-                Assert(finishMarker != null && markerCol != null && markerCol.isTrigger, "Prototype Finish Marker Test", "Finish marker trigger present");
+                // 8. Prototype Finish Marker Script Preservation Test (GameObject removed in Phase 03 cleanup)
+                System.Type markerType = typeof(Voidbound.Interactions.PrototypeFinishMarker);
+                Assert(markerType != null, "Prototype Finish Marker Script Preserved Test", "PrototypeFinishMarker script component is preserved");
 
                 // 9. UI & HUD Tests
                 UIManager ui = Object.FindFirstObjectByType<UIManager>();

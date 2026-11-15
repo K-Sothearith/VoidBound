@@ -8,8 +8,6 @@ namespace Voidbound.Core
     {
         [Header("Section Configuration")]
         [SerializeField] private string sectionName = "Section 2: Hammer Swing";
-        [SerializeField] private string notificationText = "Entering Section 2: Hammer Swing";
-        [SerializeField] private float notificationDuration = 3.0f;
         [SerializeField] private bool triggerOnce = true;
 
         private bool hasTriggered;
@@ -33,10 +31,6 @@ namespace Voidbound.Core
                 if (GameManager.Instance != null)
                 {
                     GameManager.Instance.SetSection(sectionName);
-                    if (!string.IsNullOrEmpty(notificationText))
-                    {
-                        GameManager.Instance.ShowNotification(notificationText, notificationDuration);
-                    }
                 }
             }
         }

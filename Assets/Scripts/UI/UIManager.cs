@@ -89,6 +89,7 @@ namespace Voidbound.UI
             if (notificationText != null)
             {
                 notificationText.text = string.Empty;
+                notificationText.gameObject.SetActive(false);
             }
         }
 
@@ -196,13 +197,7 @@ namespace Voidbound.UI
 
         public void DisplayNotification(string message, float duration)
         {
-            if (notificationText == null) return;
-
-            if (notificationCoroutine != null)
-            {
-                StopCoroutine(notificationCoroutine);
-            }
-            notificationCoroutine = StartCoroutine(NotificationRoutine(message, duration));
+            // Event reporting text notifications disabled per game design request
         }
 
         private IEnumerator NotificationRoutine(string message, float duration)

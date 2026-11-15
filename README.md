@@ -2,7 +2,7 @@
 
 *A first-person parkour journey through floating ruins in a night-sky void.*
 
-> **Development status:** In progress — Phases 01 and 02 implemented. The complete seven-section course and standalone build are not yet available.
+> **Development status:** In progress — Phases 01, 02, and 03 implemented. The complete seven-section course and standalone build are not yet available.
 
 ## Overview
 
@@ -41,13 +41,13 @@ There are no other planned checkpoints. The elapsed-time HUD tracks the run; the
 |---|---|---|
 | 1. Movement Tutorial | Learn movement and jumping; interact with a test terminal | Implemented |
 | 2. Hammer Swing | Cross three swinging hammers with safe resting areas | Implemented; manually traversed |
-| 3. Moving Platform | Stand on a pressure plate to summon a platform; release it and jump aboard as it returns | Planned |
+| 3. Moving Platform | Stand on a pressure plate to summon a platform; release it and jump aboard as it returns | Implemented |
 | 4. Spike Path | Navigate spike formations on a narrow bridge | Planned |
 | 5. Laser Corridor | Time movement around active and inactive lasers | Planned |
 | 6. Physics Chamber | Push two crates from opposite sides onto two plates to open a door | Planned |
 | 7. Final Gauntlet | Combine learned obstacles and reach the goal portal | Planned |
 
-The prototype finish marker at the end of the tutorial is **not** the final victory condition.
+The temporary prototype finish marker from Phase 01 has been removed from the playable scene in Phase 03 cleanup; victory will be awarded by the extraction portal at the end of Section 7.
 
 ## Current implementation
 
@@ -55,7 +55,9 @@ The prototype finish marker at the end of the tutorial is **not** the final vict
 
 **Phase 02 — Swinging Hammers:** Three swinging hammer obstacles with different phase offsets, two rest areas, section trigger, reusable hazard code, and physics components. Antigravity's original Phase 02 report records 30 passing automated assertions and no compilation errors. **Those results predate a manual remake of the hammer behavior**, so they should not be treated as verification of the current modified collision behavior. The updated section has been manually confirmed traversable.
 
-Future work includes the two checkpoints, remaining obstacles, full victory flow, atmospheric visual polish, regression testing, and a standalone build.
+**Phase 03 — Pressure-Plate Moving Platform & Checkpoint 1:** Section 3 departure and arrival platforms; Checkpoint 1 at Section 3 entrance with visual indicator light/emission and respawn point; depressible pressure plate situated close to the void ledge; kinematic moving platform traversing a 20m lethal void gap at 6.5 m/s with return delay; reliable zero-slip CharacterController player transport via unified single-move physics; two-tier gravity architecture (normal platform jump gravity -20 m/s² with 1.8m jump apex, accelerated -45 m/s² void plunge gravity below platform level); eliminated mid-air jump spam exploit; removed on-screen event reporting pop-ups; 79 passing automated assertions with zero compilation errors and full Phase 01/02 regression pass (151 total passing assertions). Scene cleanup performed: Terminal Alpha reoriented to face player spawn, temporary Phase 01 finish marker removed from scene, and Checkpoint 1 positioned inward for prominence without blocking player path.
+
+Future work includes Checkpoint 2 (Section 6), remaining obstacles (Spike Path, Laser Corridor, Physics Chamber, Final Gauntlet), full victory flow, atmospheric visual polish, regression testing, and a standalone build.
 
 ## Requirements and setup
 

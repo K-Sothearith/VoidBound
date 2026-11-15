@@ -48,6 +48,7 @@ namespace Voidbound.Core
         public event Action<string> OnSectionChanged;
         public event Action<string, float> OnNotification;
         public event Action<Vector3, Quaternion> OnRespawnRequested;
+        public event Action OnGameReset;
 
         public GameState CurrentState => currentState;
         public int CurrentLives => currentLives;
@@ -55,6 +56,9 @@ namespace Voidbound.Core
         public float ElapsedTime => elapsedTime;
         public string CurrentSectionName => currentSectionName;
         public bool IsPlaying => currentState == GameState.Playing;
+        public bool HasCustomCheckpoint => hasCustomCheckpoint;
+        public Vector3 ActiveCheckpointPosition => activeCheckpointPosition;
+        public Quaternion ActiveCheckpointRotation => activeCheckpointRotation;
 
         private void Awake()
         {
@@ -123,7 +127,6 @@ namespace Voidbound.Core
             activeCheckpointPosition = position;
             activeCheckpointRotation = rotation;
             hasCustomCheckpoint = true;
-            ShowNotification($"Checkpoint Activated: {checkpointName}", 2.5f);
         }
 
         public void SetSection(string sectionName)
@@ -150,6 +153,7 @@ namespace Voidbound.Core
             SetState(GameState.Playing);
             OnLivesChanged?.Invoke(currentLives, maxLives);
             OnRespawnRequested?.Invoke(initialSpawnPosition, initialSpawnRotation);
+            OnGameReset?.Invoke();
             ShowNotification("Expedition Initiated. Reach the Extraction Portal.", 3.0f);
         }
 
@@ -180,6 +184,7 @@ namespace Voidbound.Core
             SetState(GameState.Playing);
             OnLivesChanged?.Invoke(currentLives, maxLives);
             OnRespawnRequested?.Invoke(initialSpawnPosition, initialSpawnRotation);
+            OnGameReset?.Invoke();
             ShowNotification("Course Reset. All lives restored.", 2.5f);
         }
 
