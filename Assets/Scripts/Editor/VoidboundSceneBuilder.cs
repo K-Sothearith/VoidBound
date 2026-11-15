@@ -32,6 +32,41 @@ namespace Voidbound.Editor
             BuildScene(true);
         }
 
+        [MenuItem("Voidbound/Decorate Section 02 with LED Lights")]
+        public static void DecorateSection02Menu()
+        {
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                Debug.LogError($"[VoidboundSceneBuilder] Could not open scene at {ScenePath}!");
+                return;
+            }
+
+            GameObject sec2Root = GameObject.Find("Section_02_HammerSwing");
+            if (sec2Root == null)
+            {
+                Debug.LogError("[VoidboundSceneBuilder] 'Section_02_HammerSwing' not found in scene!");
+                return;
+            }
+
+            Transform existingDec = sec2Root.transform.Find("Section_02_Decorations");
+            if (existingDec != null)
+            {
+                Object.DestroyImmediate(existingDec.gameObject);
+            }
+
+            Material stoneMat = GetOrCreateMaterial("M_Stone_Platform", new Color(0.38f, 0.42f, 0.48f), 0.2f);
+            Material neonMat = GetOrCreateMaterial("M_Neon_Cyan", new Color(0.1f, 0.9f, 1f), 0.8f, true, new Color(0.1f, 0.9f, 1f) * 2.5f);
+            Material darkTrimMat = GetOrCreateMaterial("M_Dark_Trim", new Color(0.20f, 0.24f, 0.30f), 0.4f);
+
+            CreateSection02DecorationsAndLED(sec2Root.transform, stoneMat, neonMat, darkTrimMat);
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[VoidboundSceneBuilder] Section 02 decorations and LED lights successfully applied and scene saved!");
+        }
+
         [MenuItem("Voidbound/Build Phase 03 Scene (Moving Platform & Checkpoint 1)")]
         public static void BuildPhase03Scene()
         {
@@ -523,9 +558,9 @@ namespace Voidbound.Editor
             p1.transform.localScale = new Vector3(10f, 1f, 10f);
             p1.GetComponent<Renderer>().sharedMaterial = stoneMat;
 
-            // Trims for Platform 1
-            CreateTrim(p1.transform, new Vector3(0f, 0.51f, 4.9f), new Vector3(9.8f, 0.02f, 0.2f), neonMat);
-            CreateTrim(p1.transform, new Vector3(0f, 0.51f, -4.9f), new Vector3(9.8f, 0.02f, 0.2f), darkTrimMat);
+            // Trims for Platform 1 (normalized for parent scale 10 x 1 x 10)
+            CreateTrim(p1.transform, new Vector3(0f, 0.51f, 0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat);
+            CreateTrim(p1.transform, new Vector3(0f, 0.51f, -0.49f), new Vector3(0.98f, 0.02f, 0.02f), darkTrimMat);
 
             // Tutorial decorative stone pillars on start platform
             CreatePillar(parent, new Vector3(-4.5f, 1.5f, -4.5f), stoneMat, darkTrimMat);
@@ -538,7 +573,7 @@ namespace Voidbound.Editor
             p2.transform.position = new Vector3(0f, -0.5f, 11f);
             p2.transform.localScale = new Vector3(4f, 1f, 4f);
             p2.GetComponent<Renderer>().sharedMaterial = stoneMat;
-            CreateTrim(p2.transform, new Vector3(0f, 0.51f, 1.9f), new Vector3(3.8f, 0.02f, 0.2f), neonMat);
+            CreateTrim(p2.transform, new Vector3(0f, 0.51f, 0.475f), new Vector3(0.95f, 0.02f, 0.05f), neonMat);
 
             // Platform 3: Finish Platform (8 x 1 x 8) at Z = 20
             GameObject p3 = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -547,7 +582,7 @@ namespace Voidbound.Editor
             p3.transform.position = new Vector3(0f, -0.5f, 20f);
             p3.transform.localScale = new Vector3(8f, 1f, 8f);
             p3.GetComponent<Renderer>().sharedMaterial = stoneMat;
-            CreateTrim(p3.transform, new Vector3(0f, 0.51f, -3.9f), new Vector3(7.8f, 0.02f, 0.2f), neonMat);
+            CreateTrim(p3.transform, new Vector3(0f, 0.51f, -0.4875f), new Vector3(0.975f, 0.02f, 0.025f), neonMat);
 
             // Stone Arch signaling transition to Section 2 (Hammer Swing)
             CreateGatewayArch(parent, new Vector3(0f, 0f, 23.5f), stoneMat, neonMat);
@@ -763,7 +798,7 @@ namespace Voidbound.Editor
             endPlatform.transform.localScale = new Vector3(8f, 1f, 8f);
             endPlatform.GetComponent<Renderer>().sharedMaterial = stoneMat;
 
-            CreateTrim(endPlatform.transform, new Vector3(0f, 0.51f, -3.9f), new Vector3(7.8f, 0.02f, 0.2f), neonMat);
+            CreateTrim(endPlatform.transform, new Vector3(0f, 0.51f, -0.4875f), new Vector3(0.975f, 0.02f, 0.025f), neonMat);
             CreatePillar(sec2Root.transform, new Vector3(-3.5f, 1.5f, 62.5f), stoneMat, darkTrimMat);
             CreatePillar(sec2Root.transform, new Vector3(3.5f, 1.5f, 62.5f), stoneMat, darkTrimMat);
             CreateGatewayArch(sec2Root.transform, new Vector3(0f, 0f, 62.8f), stoneMat, neonMat);
@@ -779,7 +814,7 @@ namespace Voidbound.Editor
             girder.transform.position = new Vector3(0f, 7.5f, 40f);
             girder.transform.localScale = new Vector3(1.2f, 0.6f, 32f);
             girder.GetComponent<Renderer>().sharedMaterial = stoneMat;
-            CreateTrim(girder.transform, new Vector3(0f, -0.31f, 0f), new Vector3(0.8f, 0.05f, 31.8f), neonMat);
+            CreateTrim(girder.transform, new Vector3(0f, -0.52f, 0f), new Vector3(0.67f, 0.05f, 0.99375f), neonMat);
 
             // Arches moved into the middles between the hammers / at boundaries (Z = 25, 35, 45, 55)
             // Away from hammers at Z = 30, 40, 50 so pillars NEVER save a player knocked by a hammer!
@@ -797,6 +832,9 @@ namespace Voidbound.Editor
 
             // Hammer 3: Phase 240°
             CreateSwingingHammer(hammersRoot.transform, 3, 50f, 240f, 2.8f, 55f, stoneMat, darkTrimMat, neonMat);
+
+            // 4. Section 2 Platform Decorations and LED Lighting
+            CreateSection02DecorationsAndLED(sec2Root.transform, stoneMat, neonMat, darkTrimMat);
         }
 
         private static void CreateSection03MovingPlatform(Transform parent, Material stoneMat, Material neonMat, Material darkTrimMat)
@@ -2380,10 +2418,11 @@ namespace Voidbound.Editor
             seg.transform.localScale = scale;
             seg.GetComponent<Renderer>().sharedMaterial = stoneMat;
 
-            // Side edge trims
-            float halfW = scale.x * 0.5f - 0.05f;
-            CreateTrim(seg.transform, new Vector3(-halfW, 0.51f, 0f), new Vector3(0.1f, 0.02f, 0.98f), trimMat);
-            CreateTrim(seg.transform, new Vector3(halfW, 0.51f, 0f), new Vector3(0.1f, 0.02f, 0.98f), trimMat);
+            // Side edge trims (normalized for parent segment scale)
+            float xLocal = 0.5f - (0.05f / scale.x);
+            float xLocalScale = 0.1f / scale.x;
+            CreateTrim(seg.transform, new Vector3(-xLocal, 0.51f, 0f), new Vector3(xLocalScale, 0.02f, 0.98f), trimMat);
+            CreateTrim(seg.transform, new Vector3(xLocal, 0.51f, 0f), new Vector3(xLocalScale, 0.02f, 0.98f), trimMat);
         }
 
         private static void CreateSwingZoneFloor(Transform parent, string name, Vector3 pos, Vector3 scale, Material stoneMat, Material neonMat)
@@ -2468,8 +2507,8 @@ namespace Voidbound.Editor
             crossbeam.transform.localScale = new Vector3(8.4f, 0.8f, 1.0f);
             crossbeam.GetComponent<Renderer>().sharedMaterial = stoneMat;
 
-            // Decorative Neon Trim on Crossbeam
-            CreateTrim(crossbeam.transform, new Vector3(0f, -0.41f, 0f), new Vector3(8.0f, 0.05f, 0.2f), neonMat);
+            // Decorative Neon Trim on Crossbeam (normalized for crossbeam scale 8.4 x 0.8 x 1.0)
+            CreateTrim(crossbeam.transform, new Vector3(0f, -0.52f, 0f), new Vector3(0.95f, 0.05f, 0.2f), neonMat);
         }
 
         private static void CreateSwingingHammer(Transform parent, int index, float zPos, float phaseOffset, float period, float maxAngle, Material stoneMat, Material darkTrimMat, Material neonMat)
@@ -2532,9 +2571,9 @@ namespace Voidbound.Editor
             solidCol.isTrigger = false;
             solidCol.size = new Vector3(1.35f, 1.15f, 1.35f);
 
-            // Neon Trim stripes on Hammer Head
-            CreateTrim(head.transform, new Vector3(0f, 0f, 0.51f), new Vector3(1.2f, 0.1f, 0.05f), neonMat);
-            CreateTrim(head.transform, new Vector3(0f, 0f, -0.51f), new Vector3(1.2f, 0.1f, 0.05f), neonMat);
+            // Neon Trim stripes on Hammer Head (normalized for head scale 1.4 x 1.2 x 1.4)
+            CreateTrim(head.transform, new Vector3(0f, 0f, 0.51f), new Vector3(0.85f, 0.08f, 0.04f), neonMat);
+            CreateTrim(head.transform, new Vector3(0f, 0f, -0.51f), new Vector3(0.85f, 0.08f, 0.04f), neonMat);
 
             // Dynamic Point Light on Hammer Head
             GameObject lightObj = new GameObject("HammerLight");
@@ -2545,6 +2584,271 @@ namespace Voidbound.Editor
             hl.color = neonMat.color;
             hl.range = 5.0f;
             hl.intensity = 2.0f;
+        }
+
+        private static void CreateSection02DecorationsAndLED(Transform sec2Root, Material stoneMat, Material neonMat, Material darkTrimMat)
+        {
+            Material ledMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Tomerinio/LEDLightBlocks/Contents/Materials/M_LEDBlue.mat");
+            if (ledMat == null) ledMat = neonMat;
+
+            GameObject decRoot = new GameObject("Section_02_Decorations");
+            decRoot.transform.SetParent(sec2Root);
+            decRoot.transform.localPosition = Vector3.zero;
+
+            // 1. UnderPlatform Structural
+            GameObject underRoot = new GameObject("UnderPlatform_Structural");
+            underRoot.transform.SetParent(decRoot.transform);
+            underRoot.transform.localPosition = Vector3.zero;
+
+            // Bridge Keel Spine
+            GameObject spine = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            spine.name = "Bridge_Keel_Spine";
+            spine.transform.SetParent(underRoot.transform);
+            spine.transform.position = new Vector3(0f, -1.2f, 39.5f);
+            spine.transform.localScale = new Vector3(1.6f, 0.5f, 31f);
+            spine.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+            // Transverse Keel Ribs with LED Tips
+            float[] ribZs = { 26f, 30f, 40f, 50f, 53.5f };
+            for (int i = 0; i < ribZs.Length; i++)
+            {
+                GameObject rib = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                rib.name = $"Keel_Rib_0{i + 1}";
+                rib.transform.SetParent(underRoot.transform);
+                rib.transform.position = new Vector3(0f, -1.3f, ribZs[i]);
+                rib.transform.localScale = new Vector3(2.4f, 0.3f, 0.6f);
+                rib.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+                CreateLEDNode(rib.transform, $"Rib_0{i + 1}_Tip_LED_L", new Vector3(-1.25f, 0f, 0f), new Vector3(0.16f, 0.2f, 0.5f), ledMat);
+                CreateLEDNode(rib.transform, $"Rib_0{i + 1}_Tip_LED_R", new Vector3(1.25f, 0f, 0f), new Vector3(0.16f, 0.2f, 0.5f), ledMat);
+            }
+
+            // SafeZone Foundations
+            float[] szZs = { 35f, 45f };
+            for (int i = 0; i < szZs.Length; i++)
+            {
+                GameObject sf = new GameObject($"SafeZone_0{i + 1}_Foundation");
+                sf.transform.SetParent(underRoot.transform);
+                sf.transform.position = new Vector3(0f, 0f, szZs[i]);
+
+                GameObject t1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                t1.name = "Tier_01_Base";
+                t1.transform.SetParent(sf.transform);
+                t1.transform.localPosition = new Vector3(0f, -1.3f, 0f);
+                t1.transform.localScale = new Vector3(3.6f, 0.6f, 5.2f);
+                t1.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+                GameObject t2 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                t2.name = "Tier_02_Trim";
+                t2.transform.SetParent(sf.transform);
+                t2.transform.localPosition = new Vector3(0f, -1.75f, 0f);
+                t2.transform.localScale = new Vector3(2.6f, 0.4f, 4f);
+                t2.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+                CreateLEDNode(sf.transform, "Energy_Conduit", new Vector3(0f, -2.15f, 0f), new Vector3(1.4f, 0.4f, 2.2f), ledMat);
+                CreatePointLight(sf.transform, "Foundation_Glow", new Vector3(0f, -2.4f, 0f), new Color(0.1f, 0.9f, 1f), 0.7f, 5.5f);
+            }
+
+            // End Platform Foundation
+            GameObject ef = new GameObject("EndPlatform_Foundation");
+            ef.transform.SetParent(underRoot.transform);
+            ef.transform.position = new Vector3(0f, 0f, 59f);
+
+            GameObject et1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            et1.name = "Foundation_Tier_01";
+            et1.transform.SetParent(ef.transform);
+            et1.transform.localPosition = new Vector3(0f, -1.35f, 0f);
+            et1.transform.localScale = new Vector3(7.2f, 0.7f, 7.2f);
+            et1.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            GameObject et2 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            et2.name = "Foundation_Tier_02";
+            et2.transform.SetParent(ef.transform);
+            et2.transform.localPosition = new Vector3(0f, -1.95f, 0f);
+            et2.transform.localScale = new Vector3(5.6f, 0.5f, 5.6f);
+            et2.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+
+            GameObject et3 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            et3.name = "Foundation_Tier_03";
+            et3.transform.SetParent(ef.transform);
+            et3.transform.localPosition = new Vector3(0f, -2.5f, 0f);
+            et3.transform.localScale = new Vector3(3.8f, 0.6f, 3.8f);
+            et3.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            CreateLEDNode(ef.transform, "Void_Anchor_Core", new Vector3(0f, -3f, 0f), new Vector3(1.8f, 0.4f, 1.8f), ledMat);
+            CreatePointLight(ef.transform, "Anchor_Glow", new Vector3(0f, -3.2f, 0f), new Color(0.1f, 0.9f, 1f), 1f, 8f);
+
+            // 2. Platform Curbs and Guards
+            GameObject curbsRoot = new GameObject("Platform_Curbs_And_Guards");
+            curbsRoot.transform.SetParent(decRoot.transform);
+            curbsRoot.transform.localPosition = Vector3.zero;
+
+            // SafeZone Curbs
+            CreateCurbWithLED(curbsRoot.transform, "SafeZone_01_Curb_Left", new Vector3(-2.05f, 0.15f, 35f), new Vector3(0.2f, 0.3f, 4.4f), darkTrimMat, ledMat);
+            CreateCurbWithLED(curbsRoot.transform, "SafeZone_01_Curb_Right", new Vector3(2.05f, 0.15f, 35f), new Vector3(0.2f, 0.3f, 4.4f), darkTrimMat, ledMat);
+            CreateCurbWithLED(curbsRoot.transform, "SafeZone_02_Curb_Left", new Vector3(-2.05f, 0.15f, 45f), new Vector3(0.2f, 0.3f, 4.4f), darkTrimMat, ledMat);
+            CreateCurbWithLED(curbsRoot.transform, "SafeZone_02_Curb_Right", new Vector3(2.05f, 0.15f, 45f), new Vector3(0.2f, 0.3f, 4.4f), darkTrimMat, ledMat);
+            CreateCurbWithLED(curbsRoot.transform, "EndPlatform_Curb_Left", new Vector3(-3.95f, 0.15f, 58.8f), new Vector3(0.2f, 0.3f, 6.2f), darkTrimMat, ledMat);
+            CreateCurbWithLED(curbsRoot.transform, "EndPlatform_Curb_Right", new Vector3(3.95f, 0.15f, 58.8f), new Vector3(0.2f, 0.3f, 6.2f), darkTrimMat, ledMat);
+
+            // 3. Hazard Warning LEDs
+            GameObject hazardRoot = new GameObject("Hazard_Warning_LEDs");
+            hazardRoot.transform.SetParent(decRoot.transform);
+            hazardRoot.transform.localPosition = Vector3.zero;
+
+            float[] hazardZs = { 28.05f, 31.95f, 38.05f, 41.95f, 48.05f, 51.95f };
+            string[] hazardNames = {
+                "SwingZone_01_Entry", "SwingZone_01_Exit",
+                "SwingZone_02_Entry", "SwingZone_02_Exit",
+                "SwingZone_03_Entry", "SwingZone_03_Exit"
+            };
+            for (int i = 0; i < hazardZs.Length; i++)
+            {
+                CreateLEDNode(hazardRoot.transform, $"Hazard_Strip_{hazardNames[i]}", new Vector3(0f, 0.015f, hazardZs[i]), new Vector3(2.45f, 0.025f, 0.12f), ledMat);
+            }
+
+            // 4. Pylons and Monoliths
+            GameObject pylonsRoot = new GameObject("Pylons_And_Monoliths");
+            pylonsRoot.transform.SetParent(decRoot.transform);
+            pylonsRoot.transform.localPosition = Vector3.zero;
+
+            CreateGuidePylon(pylonsRoot.transform, "Entrance_Pylon_Left", new Vector3(-1.6f, 0.8f, 24.3f), darkTrimMat, ledMat);
+            CreateGuidePylon(pylonsRoot.transform, "Entrance_Pylon_Right", new Vector3(1.6f, 0.8f, 24.3f), darkTrimMat, ledMat);
+            CreateGuidePylon(pylonsRoot.transform, "Exit_Pylon_Left", new Vector3(-1.6f, 0.8f, 54.7f), darkTrimMat, ledMat);
+            CreateGuidePylon(pylonsRoot.transform, "Exit_Pylon_Right", new Vector3(1.6f, 0.8f, 54.7f), darkTrimMat, ledMat);
+
+            CreateLandingObelisk(pylonsRoot.transform, "Landing_Obelisk_Left", new Vector3(-3.85f, 1.2f, 55.6f), darkTrimMat, ledMat);
+            CreateLandingObelisk(pylonsRoot.transform, "Landing_Obelisk_Right", new Vector3(3.85f, 1.2f, 55.6f), darkTrimMat, ledMat);
+
+            // 5. Neon LED Accents and Chains
+            GameObject ledAccentsRoot = new GameObject("Neon_LED_Accents_And_Chains");
+            ledAccentsRoot.transform.SetParent(decRoot.transform);
+            ledAccentsRoot.transform.localPosition = Vector3.zero;
+
+            // Runway LEDs
+            float[] runwayZs = { 57f, 59f, 61f };
+            for (int i = 0; i < runwayZs.Length; i++)
+            {
+                CreateLEDNode(ledAccentsRoot.transform, $"Runway_LED_0{i + 1}", new Vector3(0f, 0.015f, runwayZs[i]), new Vector3(1.4f, 0.02f, 0.15f), ledMat);
+            }
+
+            // Arch Pillar Neon Strips
+            float[] archZs = { 25f, 35f, 45f, 55f };
+            for (int i = 0; i < archZs.Length; i++)
+            {
+                CreateLEDNode(ledAccentsRoot.transform, $"Arch_0{i + 1}_PillarStrip_Left", new Vector3(-3.35f, 3.5f, archZs[i]), new Vector3(0.08f, 6.5f, 0.15f), ledMat);
+                CreateLEDNode(ledAccentsRoot.transform, $"Arch_0{i + 1}_PillarStrip_Right", new Vector3(3.35f, 3.5f, archZs[i]), new Vector3(0.08f, 6.5f, 0.15f), ledMat);
+            }
+
+            // Floating Void Energy Diamonds
+            CreateFloatingDiamond(ledAccentsRoot.transform, "Diamond_SZ1_L", new Vector3(-3.2f, 1.2f, 35f), new Vector3(0.45f, 0.45f, 0.45f), ledMat);
+            CreateFloatingDiamond(ledAccentsRoot.transform, "Diamond_SZ1_R", new Vector3(3.2f, 1.2f, 35f), new Vector3(0.45f, 0.45f, 0.45f), ledMat);
+            CreateFloatingDiamond(ledAccentsRoot.transform, "Diamond_SZ2_L", new Vector3(-3.2f, 1.2f, 45f), new Vector3(0.45f, 0.45f, 0.45f), ledMat);
+            CreateFloatingDiamond(ledAccentsRoot.transform, "Diamond_SZ2_R", new Vector3(3.2f, 1.2f, 45f), new Vector3(0.45f, 0.45f, 0.45f), ledMat);
+            CreateFloatingDiamond(ledAccentsRoot.transform, "Diamond_End_L", new Vector3(-4.8f, 1.5f, 59f), new Vector3(0.6f, 0.6f, 0.6f), ledMat);
+            CreateFloatingDiamond(ledAccentsRoot.transform, "Diamond_End_R", new Vector3(4.8f, 1.5f, 59f), new Vector3(0.6f, 0.6f, 0.6f), ledMat);
+
+            // Animated Chasing LEDNode Chains
+            CreateChasingChain(ledAccentsRoot.transform, "SZ1_L", -2.05f, 35f, ledMat);
+            CreateChasingChain(ledAccentsRoot.transform, "SZ1_R", 2.05f, 35f, ledMat);
+            CreateChasingChain(ledAccentsRoot.transform, "SZ2_L", -2.05f, 45f, ledMat);
+            CreateChasingChain(ledAccentsRoot.transform, "SZ2_R", 2.05f, 45f, ledMat);
+        }
+
+        private static GameObject CreateLEDNode(Transform parent, string name, Vector3 pos, Vector3 scale, Material mat)
+        {
+            GameObject node = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            node.name = name;
+            node.transform.SetParent(parent);
+            node.transform.localPosition = pos;
+            node.transform.localScale = scale;
+            node.GetComponent<Renderer>().sharedMaterial = mat;
+            Object.DestroyImmediate(node.GetComponent<Collider>());
+            return node;
+        }
+
+        private static GameObject CreatePointLight(Transform parent, string name, Vector3 pos, Color color, float intensity, float range)
+        {
+            GameObject lightObj = new GameObject(name);
+            lightObj.transform.SetParent(parent);
+            lightObj.transform.localPosition = pos;
+            Light l = lightObj.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = color;
+            l.intensity = intensity;
+            l.range = range;
+            return lightObj;
+        }
+
+        private static void CreateCurbWithLED(Transform parent, string name, Vector3 pos, Vector3 scale, Material curbMat, Material ledMat)
+        {
+            GameObject curb = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            curb.name = name;
+            curb.transform.SetParent(parent);
+            curb.transform.position = pos;
+            curb.transform.localScale = scale;
+            curb.GetComponent<Renderer>().sharedMaterial = curbMat;
+
+            CreateLEDNode(curb.transform, "Neon_LED_Trim", new Vector3(0f, 0.52f, 0f), new Vector3(0.6f, 0.08f, 0.98f), ledMat);
+        }
+
+        private static void CreateGuidePylon(Transform parent, string name, Vector3 pos, Material trimMat, Material ledMat)
+        {
+            GameObject pylon = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pylon.name = name;
+            pylon.transform.SetParent(parent);
+            pylon.transform.position = pos;
+            pylon.transform.localScale = new Vector3(0.35f, 1.6f, 0.35f);
+            pylon.GetComponent<Renderer>().sharedMaterial = trimMat;
+
+            CreateLEDNode(pylon.transform, "LED_Core", new Vector3(0f, 0.3f, 0f), new Vector3(0.25f, 0.5f, 0.25f), ledMat);
+            CreatePointLight(pylon.transform, "Pylon_Glow", new Vector3(0f, 0.3f, 0f), new Color(0.1f, 0.9f, 1f), 0.8f, 3.5f);
+        }
+
+        private static void CreateLandingObelisk(Transform parent, string name, Vector3 pos, Material trimMat, Material ledMat)
+        {
+            GameObject obelisk = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            obelisk.name = name;
+            obelisk.transform.SetParent(parent);
+            obelisk.transform.position = pos;
+            obelisk.transform.localScale = new Vector3(0.45f, 2.4f, 0.45f);
+            obelisk.GetComponent<Renderer>().sharedMaterial = trimMat;
+
+            CreateLEDNode(obelisk.transform, "LED_Vertical_Slot", Vector3.zero, new Vector3(0.2f, 2.0f, 0.48f), ledMat);
+            CreateLEDNode(obelisk.transform, "LED_Cap", new Vector3(0f, 1.25f, 0f), new Vector3(0.35f, 0.12f, 0.35f), ledMat);
+            CreatePointLight(obelisk.transform, "Obelisk_Light", new Vector3(0f, 1.3f, 0f), new Color(0.1f, 0.9f, 1f), 0.9f, 4.5f);
+        }
+
+        private static void CreateFloatingDiamond(Transform parent, string name, Vector3 pos, Vector3 scale, Material mat)
+        {
+            GameObject diamond = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            diamond.name = name;
+            diamond.transform.SetParent(parent);
+            diamond.transform.position = pos;
+            diamond.transform.localRotation = Quaternion.Euler(45f, 45f, 45f);
+            diamond.transform.localScale = scale;
+            diamond.GetComponent<Renderer>().sharedMaterial = mat;
+            Object.DestroyImmediate(diamond.GetComponent<Collider>());
+        }
+
+        private static void CreateChasingChain(Transform parent, string prefix, float x, float centerZ, Material ledMat)
+        {
+            float[] offsets = { -1.8f, -0.6f, 0.6f, 1.8f };
+            LEDNode prevNode = null;
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                GameObject nodeObj = CreateLEDNode(parent, $"LEDNode_{prefix}_{i + 1}", new Vector3(x, 0.33f, centerZ + offsets[i]), new Vector3(0.14f, 0.08f, 0.9f), ledMat);
+                LEDNode nodeComp = nodeObj.AddComponent<LEDNode>();
+                if (i == 0)
+                {
+                    nodeComp.isFirstNode = true;
+                }
+                else
+                {
+                    nodeComp.prevNode = prevNode;
+                }
+                prevNode = nodeComp;
+            }
         }
 
         private static void CreateKillVolume(Transform parent, float centerZ = 30f, float lengthZ = 300f)
