@@ -136,9 +136,13 @@ namespace Voidbound.Editor
                 Assert(sec5Trigger != null && sec5Col != null && sec5Col.isTrigger,
                     "Section 5 Trigger Test", "Section 5 entrance trigger configured");
 
-                GameObject corridorFloor = GameObject.Find("Platform_13_LaserCorridor_Floor");
+                GameObject c1Floor = GameObject.Find("Platform_13A_LaserChallenge1_Floor");
+                GameObject c2Floor = GameObject.Find("Platform_13B_LaserChallenge2_Floor");
+                GameObject c3Plat1 = GameObject.Find("Platform_13C_Circular1");
+                GameObject c3Plat2 = GameObject.Find("Platform_13D_Circular2");
                 GameObject sec5Arrival = GameObject.Find("Platform_14_Section5_Arrival");
-                Assert(corridorFloor != null && sec5Arrival != null, "Section 5 Platforms Test", "Corridor floor and arrival platform exist");
+                Assert(c1Floor != null && c2Floor != null && c3Plat1 != null && c3Plat2 != null && sec5Arrival != null,
+                    "Section 5 Platforms Test", "Challenge 1 & 2 floors, both circular platforms, and arrival platform exist");
 
                 // 9. Checkpoint 2 Strict Absence Test (Requirement: Checkpoint 2 belongs in Section 6, NOT Section 4 or 5)
                 Checkpoint[] allCheckpoints = Object.FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
@@ -250,68 +254,68 @@ namespace Voidbound.Editor
                 isRespawningField?.SetValue(gm, false);
                 pdhIsDead?.SetValue(playerDeathHandler, false);
 
-                // 13. Challenge 2: Alternating Laser Pair Dynamics Test
+                // 13. Challenge 2: Vertical Moving Lasers Mechanics & Lethality Test
                 GameObject laser2AObj = GameObject.Find("Laser_Challenge2_PairA");
                 GameObject laser2BObj = GameObject.Find("Laser_Challenge2_PairB");
-                Assert(laser2AObj != null && laser2BObj != null, "Laser Pair Presence Test", "Alternating laser pair A and B exist");
+                Assert(laser2AObj != null && laser2BObj != null, "Vertical Laser Pair Presence Test", "Vertical moving lasers Pair A and B exist");
 
-                LaserHazard laser2A = laser2AObj.GetComponent<LaserHazard>();
-                LaserHazard laser2B = laser2BObj.GetComponent<LaserHazard>();
-                lhAwake?.Invoke(laser2A, null);
-                lhStart?.Invoke(laser2A, null);
-                lhAwake?.Invoke(laser2B, null);
-                lhStart?.Invoke(laser2B, null);
+                VerticalMovingLaser vmLaser2A = laser2AObj.GetComponent<VerticalMovingLaser>();
+                VerticalMovingLaser vmLaser2B = laser2BObj.GetComponent<VerticalMovingLaser>();
+                Assert(vmLaser2A != null && vmLaser2B != null, "Vertical Laser Component Test", "VerticalMovingLaser components attached to Pair A and B");
 
-                laser2A.ResetLaser();
-                laser2B.ResetLaser();
+                vmLaser2A.ResetLaser();
+                vmLaser2B.ResetLaser();
 
-                // At t = 0: Laser 2A is Active, Laser 2B is Inactive (due to initial delay)
-                Assert(laser2A.CurrentState == LaserState.Active, "Pair A Initial Active Test", "Laser 2A starts Active");
-                Assert(laser2B.CurrentState == LaserState.Inactive, "Pair B Initial Inactive Test", "Laser 2B starts Inactive");
+                // At t = 0: Laser 2A (phase 0°) is at mid-height (1.4m), moving upwards
+                // Laser 2B (phase 180°) is at mid-height (1.4m), moving downwards
+                // Advance to quarter period (0.8s): Laser 2A is near maxHeight (2.4m), Laser 2B is near minHeight (0.4m)
+                vmLaser2A.Tick(0.8f);
+                vmLaser2B.Tick(0.8f);
+                Assert(vmLaser2A.CurrentHeight > 2.0f, "Vertical Laser 2A Peak Test", $"Laser 2A height is {vmLaser2A.CurrentHeight:F2}m (high enough to run underneath)");
+                Assert(vmLaser2B.CurrentHeight < 0.8f, "Vertical Laser 2B Trough Test", $"Laser 2B height is {vmLaser2B.CurrentHeight:F2}m (low enough to jump over)");
 
-                // At t = 1.6s: Laser 2A transitions to Inactive (activeDuration 1.5s expires)
-                laser2A.Tick(1.6f);
-                laser2B.Tick(1.6f);
-                Assert(laser2A.CurrentState == LaserState.Inactive, "Pair A Inactive Phase Test", "Laser 2A is now Inactive (safe to step through)");
+                // Vertical moving lasers are ALWAYS lethal (never turn off)
+                // Player contact with vertical moving laser -> Immediate Death and respawn at Checkpoint 1
+                vmLaser2A.ProcessHit(player);
+                Assert(gm.CurrentLives == 0, "Vertical Laser Lethal Kill Test", $"Vertical moving laser contact reduced lives to {gm.CurrentLives}");
 
-                // Advance to t = 2.3s: Laser 2B finishes initial delay and transitions into Active
-                laser2A.Tick(0.7f);
-                laser2B.Tick(0.7f);
-                Assert(laser2B.CurrentState == LaserState.Active, "Pair B Active Phase Test", "Laser 2B is now Active while 2A is safe");
+                isRespawningField?.SetValue(gm, false);
+                pdhIsDead?.SetValue(playerDeathHandler, false);
+                gm.RestartGame(); // Reset to 3 lives for subsequent tests
+                gm.StartGame();
+                cpTrigger?.Invoke(cp1, new object[] { playerCC }); // Re-anchor Checkpoint 1
 
-                // 14. Challenge 3: Sequential Laser Group Dynamics Test
-                GameObject laser3AObj = GameObject.Find("Laser_Challenge3_SeqA");
-                GameObject laser3BObj = GameObject.Find("Laser_Challenge3_SeqB");
-                GameObject laser3CObj = GameObject.Find("Laser_Challenge3_SeqC");
-                Assert(laser3AObj != null && laser3BObj != null && laser3CObj != null,
-                    "Sequential Group Presence Test", "Sequential laser group A, B, C exist");
+                // 14. Challenge 3: Rotating Central Laser Turrets Mechanics & Lethality Test
+                GameObject turret1Obj = GameObject.Find("Laser_Turret_Platform1");
+                GameObject turret2Obj = GameObject.Find("Laser_Turret_Platform2");
+                Assert(turret1Obj != null && turret2Obj != null, "Rotating Turrets Presence Test", "Laser turrets for Platform 1 and 2 exist");
 
-                LaserHazard laser3A = laser3AObj.GetComponent<LaserHazard>();
-                LaserHazard laser3B = laser3BObj.GetComponent<LaserHazard>();
-                LaserHazard laser3C = laser3CObj.GetComponent<LaserHazard>();
-                lhAwake?.Invoke(laser3A, null);
-                lhStart?.Invoke(laser3A, null);
-                lhAwake?.Invoke(laser3B, null);
-                lhStart?.Invoke(laser3B, null);
-                lhAwake?.Invoke(laser3C, null);
-                lhStart?.Invoke(laser3C, null);
+                RotatingLaserTurret turret1 = turret1Obj.GetComponent<RotatingLaserTurret>();
+                RotatingLaserTurret turret2 = turret2Obj.GetComponent<RotatingLaserTurret>();
+                Assert(turret1 != null && turret2 != null, "Turret Components Test", "RotatingLaserTurret components attached");
 
-                laser3A.ResetLaser();
-                laser3B.ResetLaser();
-                laser3C.ResetLaser();
+                // Verify Platform 1 rotates clockwise (+35 deg/s) and Platform 2 rotates counter-clockwise (-48 deg/s)
+                Assert(Mathf.Approximately(turret1.RotationSpeed, 35.0f), "Turret 1 Clockwise Speed Test",
+                    $"Turret 1 rotates clockwise at {turret1.RotationSpeed:F1}°/s");
+                Assert(Mathf.Approximately(turret2.RotationSpeed, -48.0f), "Turret 2 Counter-Clockwise Speed Test",
+                    $"Turret 2 rotates counter-clockwise at higher pace {turret2.RotationSpeed:F1}°/s");
 
-                // Advance past wave completion: All three enter Inactive window
-                // Laser A active 0.8 to 2.0s; Laser B active 1.6 to 2.8s; Laser C active 2.4 to 3.6s
-                // At t = 4.0s, all three lasers are Inactive!
-                laser3A.Tick(4.0f);
-                laser3B.Tick(4.0f);
-                laser3C.Tick(4.0f);
+                turret1.ResetTurret();
+                turret2.ResetTurret();
 
-                bool allClear = (laser3A.CurrentState == LaserState.Inactive) &&
-                                (laser3B.CurrentState == LaserState.Inactive) &&
-                                (laser3C.CurrentState == LaserState.Inactive);
-                Assert(allClear, "Sequential All-Clear Window Test",
-                    "All 3 sequential lasers provide a simultaneous all-clear inactive window for sprint crossing");
+                turret1.Tick(1.0f);
+                turret2.Tick(1.0f);
+                Assert(Mathf.Approximately(turret1.CurrentAngle, 35.0f), "Turret 1 Angle Test", $"Turret 1 angle after 1s is {turret1.CurrentAngle:F1}°");
+                Assert(Mathf.Approximately(turret2.CurrentAngle, 312.0f), "Turret 2 Angle Test", $"Turret 2 angle after 1s is {turret2.CurrentAngle:F1}° (360 - 48)");
+
+                // Turrets are ALWAYS lethal (never turn off)
+                turret1.ProcessHit(player);
+                Assert(gm.CurrentLives == 2, "Turret Lethal Kill Test", $"Turret contact reduced lives to {gm.CurrentLives}");
+                Assert(Mathf.Approximately(player.transform.position.z, 65.0f), "Turret Respawn at Checkpoint 1 Test",
+                    $"Player respawned at Checkpoint 1 Z={player.transform.position.z:F1}");
+
+                isRespawningField?.SetValue(gm, false);
+                pdhIsDead?.SetValue(playerDeathHandler, false);
 
                 // 15. Falling into KillVolume in Section 4 & 5
                 GameObject kvObj = GameObject.Find("KillVolume_Pit");
@@ -328,9 +332,18 @@ namespace Voidbound.Editor
                 // Simulate player falling into void in Section 4 (Z = 120m)
                 player.transform.position = new Vector3(0f, -12f, 120f);
                 isRespawningField?.SetValue(gm, false);
+                pdhIsDead?.SetValue(playerDeathHandler, false);
+                kv.TriggerKill(player);
+                Assert(gm.CurrentLives == 1, "Section 4 Void Fall Death Test", $"Falling into void reduced lives to {gm.CurrentLives}");
+                Assert(Mathf.Approximately(player.transform.position.z, 65.0f), "Void Fall Respawn at Checkpoint 1 Test",
+                    $"Player respawned at Checkpoint 1 Z={player.transform.position.z:F1}");
+
+                // Final void fall consumes last life -> GameOver
+                isRespawningField?.SetValue(gm, false);
+                pdhIsDead?.SetValue(playerDeathHandler, false);
                 kv.TriggerKill(player);
                 Assert(gm.CurrentLives == 0 && gm.CurrentState == GameState.GameOver,
-                    "Section 4 Void Fall Death Test", "Falling into void consumed final life -> GameOver");
+                    "Section 4 Void Fall GameOver Test", "Consuming final life triggers GameOver");
 
                 // 16. Game Over & Course Restart Reset Test
                 gm.RestartGame();

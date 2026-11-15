@@ -74,9 +74,15 @@ namespace Voidbound.Player
         {
             var hazard = other.GetComponent<Voidbound.Obstacles.Hazard>();
             if (hazard == null) hazard = other.GetComponentInParent<Voidbound.Obstacles.Hazard>();
+            if (hazard == null)
+            {
+                var bridge = other.GetComponent<Voidbound.Obstacles.HazardTriggerBridge>();
+                if (bridge != null) hazard = bridge.ParentHazard;
+            }
+
             if (hazard != null)
             {
-                HandleDeath(hazard.HazardName);
+                hazard.ProcessHit(gameObject);
             }
         }
 
@@ -84,9 +90,15 @@ namespace Voidbound.Player
         {
             var hazard = hit.collider.GetComponent<Voidbound.Obstacles.Hazard>();
             if (hazard == null) hazard = hit.collider.GetComponentInParent<Voidbound.Obstacles.Hazard>();
+            if (hazard == null)
+            {
+                var bridge = hit.collider.GetComponent<Voidbound.Obstacles.HazardTriggerBridge>();
+                if (bridge != null) hazard = bridge.ParentHazard;
+            }
+
             if (hazard != null)
             {
-                HandleDeath(hazard.HazardName);
+                hazard.ProcessHit(gameObject);
             }
         }
 

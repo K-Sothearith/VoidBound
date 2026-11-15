@@ -29,7 +29,7 @@ namespace Voidbound.Obstacles
             ProcessHit(collision.gameObject);
         }
 
-        public void ProcessHit(GameObject target)
+        public virtual void ProcessHit(GameObject target)
         {
             if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
             {

@@ -8,12 +8,8 @@ namespace Voidbound.Obstacles
     /// Lethal spike hazard component. Immediate death on contact with single-death guard.
     /// Resets cleanly on player respawn and game reset.
     /// </summary>
-    public class SpikeHazard : MonoBehaviour
+    public class SpikeHazard : Hazard
     {
-        [Header("Spike Hazard Settings")]
-        [SerializeField] private string hazardName = "Impaled by Spikes";
-        [SerializeField] private bool instantKill = true;
-
         [Header("Visual Feedback")]
         [SerializeField] private Renderer spikeRenderer;
         [SerializeField] private Light spikeLight;
@@ -21,8 +17,6 @@ namespace Voidbound.Obstacles
 
         private bool hasKilled;
 
-        public string HazardName => hazardName;
-        public bool InstantKill => instantKill;
         public bool HasKilled => hasKilled;
 
         private void Start()
@@ -53,28 +47,11 @@ namespace Voidbound.Obstacles
             ProcessHit(collision.gameObject);
         }
 
-        public void ProcessHit(GameObject target)
+        public override void ProcessHit(GameObject target)
         {
             if (hasKilled) return;
-            if (GameManager.Instance != null && !GameManager.Instance.IsPlaying) return;
-
-            var deathHandler = target.GetComponent<PlayerDeathHandler>() ?? target.GetComponentInParent<PlayerDeathHandler>();
-            if (deathHandler != null)
-            {
-                hasKilled = true;
-                deathHandler.HandleDeath(hazardName);
-                return;
-            }
-
-            var playerController = target.GetComponent<PlayerController>() ?? target.GetComponentInParent<PlayerController>();
-            if (playerController != null || target.CompareTag("Player"))
-            {
-                hasKilled = true;
-                if (GameManager.Instance != null)
-                {
-                    GameManager.Instance.OnPlayerDied();
-                }
-            }
+            hasKilled = true;
+            base.ProcessHit(target);
         }
 
         private void OnRespawnRequested(Vector3 position, Quaternion rotation)

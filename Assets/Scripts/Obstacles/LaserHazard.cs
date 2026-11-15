@@ -16,7 +16,7 @@ namespace Voidbound.Obstacles
     /// Timed pulsing laser hazard. Cycles through Inactive, Warning, and lethal Active states.
     /// Supports phase offsets, alternating pairs, and sequential sweeping groups.
     /// </summary>
-    public class LaserHazard : MonoBehaviour
+    public class LaserHazard : Hazard
     {
         [Header("State Durations (seconds)")]
         [SerializeField] private float inactiveDuration = 2.0f;
@@ -259,29 +259,12 @@ namespace Voidbound.Obstacles
             ProcessHit(other.gameObject);
         }
 
-        public void ProcessHit(GameObject target)
+        public override void ProcessHit(GameObject target)
         {
             if (currentState != LaserState.Active) return;
             if (hasKilledThisCycle) return;
-            if (GameManager.Instance != null && !GameManager.Instance.IsPlaying) return;
-
-            var deathHandler = target.GetComponent<PlayerDeathHandler>() ?? target.GetComponentInParent<PlayerDeathHandler>();
-            if (deathHandler != null)
-            {
-                hasKilledThisCycle = true;
-                deathHandler.HandleDeath("Vaporized by Laser");
-                return;
-            }
-
-            var playerController = target.GetComponent<PlayerController>() ?? target.GetComponentInParent<PlayerController>();
-            if (playerController != null || target.CompareTag("Player"))
-            {
-                hasKilledThisCycle = true;
-                if (GameManager.Instance != null)
-                {
-                    GameManager.Instance.OnPlayerDied();
-                }
-            }
+            hasKilledThisCycle = true;
+            base.ProcessHit(target);
         }
 
         private void OnRespawnRequested(Vector3 position, Quaternion rotation)

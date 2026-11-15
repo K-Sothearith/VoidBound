@@ -976,61 +976,84 @@ namespace Voidbound.Editor
             soSecTrigger.FindProperty("sectionName").stringValue = "Section 5: Laser Corridor";
             soSecTrigger.ApplyModifiedProperties();
 
-            // 2. Corridor Walkway Platform (5 x 1 x 49) Z: 161 to 210 (center Z = 185.5)
-            GameObject corridorPlat = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            corridorPlat.name = "Platform_13_LaserCorridor_Floor";
-            corridorPlat.transform.SetParent(sec5Root.transform);
-            corridorPlat.transform.position = new Vector3(0f, -0.5f, 185.5f);
-            corridorPlat.transform.localScale = new Vector3(5f, 1f, 49f);
-            corridorPlat.GetComponent<Renderer>().sharedMaterial = stoneMat;
+            // 2. Challenge 1: Floor Platform (5 x 1 x 17) Z: 161 to 178 (center Z = 169.5)
+            GameObject c1Plat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            c1Plat.name = "Platform_13A_LaserChallenge1_Floor";
+            c1Plat.transform.SetParent(sec5Root.transform);
+            c1Plat.transform.position = new Vector3(0f, -0.5f, 169.5f);
+            c1Plat.transform.localScale = new Vector3(5f, 1f, 17f);
+            c1Plat.GetComponent<Renderer>().sharedMaterial = stoneMat;
 
-            CreateTrim(corridorPlat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
-            CreateTrim(corridorPlat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(c1Plat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(c1Plat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(c1Plat.transform, new Vector3(0f, 0.51f, -0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat);
 
-            // Decorative Corridor Columns along sides
-            float[] columnZs = new float[] { 165f, 175f, 184f, 193f, 201f, 209f };
-            for (int i = 0; i < columnZs.Length; i++)
-            {
-                CreatePillar(sec5Root.transform, new Vector3(-2.6f, 1.5f, columnZs[i]), stoneMat, darkTrimMat);
-                CreatePillar(sec5Root.transform, new Vector3(2.6f, 1.5f, columnZs[i]), stoneMat, darkTrimMat);
-            }
+            CreatePillar(sec5Root.transform, new Vector3(-2.6f, 1.5f, 165f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(2.6f, 1.5f, 165f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(-2.6f, 1.5f, 175f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(2.6f, 1.5f, 175f), stoneMat, darkTrimMat);
 
-            // Overhead Archways between challenges
+            // Overhead Archway at safe rest zone between Challenge 1 and 2
             CreateStoneArch(sec5Root.transform, "Arch_Laser_Rest1", 176f, stoneMat, darkTrimMat, neonMat);
-            CreateStoneArch(sec5Root.transform, "Arch_Laser_Rest2", 191f, stoneMat, darkTrimMat, neonMat);
 
-            // 3. Challenge 1: Single Pulsing Laser (Z = 170.0)
+            // Pulsing Laser 1 at Z = 170.0
             CreateLaserHazard(sec5Root.transform, "Laser_Challenge1_Single", 170.0f, 1.0f, 2.5f, 1.0f, 1.5f, 0f, LaserState.Inactive, activeMat, warningMat, emitterMat);
 
-            // 4. Challenge 2: Alternating Laser Pair (Z = 181.5 and Z = 186.5)
-            CreateLaserHazard(sec5Root.transform, "Laser_Challenge2_PairA", 181.5f, 1.0f, 2.0f, 1.0f, 1.5f, 0f, LaserState.Active, activeMat, warningMat, emitterMat);
-            CreateLaserHazard(sec5Root.transform, "Laser_Challenge2_PairB", 186.5f, 1.0f, 2.0f, 1.0f, 1.5f, 2.25f, LaserState.Active, activeMat, warningMat, emitterMat);
+            // 3. Challenge 2: Floor Platform (5 x 1 x 15) Z: 178 to 193 (center Z = 185.5)
+            GameObject c2Plat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            c2Plat.name = "Platform_13B_LaserChallenge2_Floor";
+            c2Plat.transform.SetParent(sec5Root.transform);
+            c2Plat.transform.position = new Vector3(0f, -0.5f, 185.5f);
+            c2Plat.transform.localScale = new Vector3(5f, 1f, 15f);
+            c2Plat.GetComponent<Renderer>().sharedMaterial = stoneMat;
 
-            // 5. Challenge 3: Sequential Laser Group (Z = 197.0, 201.0, 205.0)
-            CreateLaserHazard(sec5Root.transform, "Laser_Challenge3_SeqA", 197.0f, 1.0f, 4.0f, 0.8f, 1.2f, 0.0f, LaserState.Warning, activeMat, warningMat, emitterMat);
-            CreateLaserHazard(sec5Root.transform, "Laser_Challenge3_SeqB", 201.0f, 1.0f, 4.0f, 0.8f, 1.2f, 0.8f, LaserState.Warning, activeMat, warningMat, emitterMat);
-            CreateLaserHazard(sec5Root.transform, "Laser_Challenge3_SeqC", 205.0f, 1.0f, 4.0f, 0.8f, 1.2f, 1.6f, LaserState.Warning, activeMat, warningMat, emitterMat);
+            CreateTrim(c2Plat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(c2Plat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
+            CreateTrim(c2Plat.transform, new Vector3(0f, 0.51f, 0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat); // Front ledge overlooking void
 
-            // 6. Section 5 Arrival / Transition Platform (8 x 1 x 12) Z: 210 to 222 (center Z = 216)
+            CreatePillar(sec5Root.transform, new Vector3(-2.6f, 1.5f, 180f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(2.6f, 1.5f, 180f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(-2.6f, 1.5f, 191f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(2.6f, 1.5f, 191f), stoneMat, darkTrimMat);
+
+            CreateStoneArch(sec5Root.transform, "Arch_Laser_Rest2", 191f, stoneMat, darkTrimMat, neonMat);
+
+            // Vertical Moving Lasers (Never shut off)
+            // Laser 2A at Z = 182.0, Phase 0 deg
+            CreateVerticalMovingLaser(sec5Root.transform, "Laser_Challenge2_PairA", 182.0f, 0.4f, 2.4f, 3.2f, 0f, activeMat, emitterMat, darkTrimMat);
+            // Laser 2B at Z = 187.0, Phase 180 deg
+            CreateVerticalMovingLaser(sec5Root.transform, "Laser_Challenge2_PairB", 187.0f, 0.4f, 2.4f, 3.2f, 180f, activeMat, emitterMat, darkTrimMat);
+
+            // 4. Challenge 3: Two Circular Platforms over the void with central rotating turrets
+            // Circular Platform 1: Center Z = 200, Diameter 7m (Z: 196.5 to 203.5). Void gap from Challenge 2 ledge is 3.5m.
+            CreateCircularPlatform(sec5Root.transform, "Platform_13C_Circular1", new Vector3(0f, -0.5f, 200f), 7.0f, stoneMat, darkTrimMat, neonMat);
+            CreateRotatingLaserTurret(sec5Root.transform, "Laser_Turret_Platform1", new Vector3(0f, 0f, 200f), 35.0f, 7.2f, 0.6f, activeMat, darkTrimMat, neonMat, emitterMat);
+
+            // Circular Platform 2: Center Z = 210, Diameter 7m (Z: 206.5 to 213.5). Void gap between circles is 3.0m.
+            CreateCircularPlatform(sec5Root.transform, "Platform_13D_Circular2", new Vector3(0f, -0.5f, 210f), 7.0f, stoneMat, darkTrimMat, neonMat);
+            CreateRotatingLaserTurret(sec5Root.transform, "Laser_Turret_Platform2", new Vector3(0f, 0f, 210f), -48.0f, 7.2f, 0.6f, activeMat, darkTrimMat, neonMat, emitterMat);
+
+            // 5. Section 5 Arrival / Transition Platform (8 x 1 x 10) Z: 217 to 227 (center Z = 222)
+            // Void gap from Circular Platform 2 back edge (Z = 213.5) is 3.5m.
             GameObject arrivalPlat = GameObject.CreatePrimitive(PrimitiveType.Cube);
             arrivalPlat.name = "Platform_14_Section5_Arrival";
             arrivalPlat.transform.SetParent(sec5Root.transform);
-            arrivalPlat.transform.position = new Vector3(0f, -0.5f, 216f);
-            arrivalPlat.transform.localScale = new Vector3(8f, 1f, 12f);
+            arrivalPlat.transform.position = new Vector3(0f, -0.5f, 222f);
+            arrivalPlat.transform.localScale = new Vector3(8f, 1f, 10f);
             arrivalPlat.GetComponent<Renderer>().sharedMaterial = stoneMat;
 
             CreateTrim(arrivalPlat.transform, new Vector3(-0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
             CreateTrim(arrivalPlat.transform, new Vector3(0.49f, 0.51f, 0f), new Vector3(0.02f, 0.02f, 0.98f), darkTrimMat);
-            CreateTrim(arrivalPlat.transform, new Vector3(0f, 0.51f, -0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat);
+            CreateTrim(arrivalPlat.transform, new Vector3(0f, 0.51f, -0.49f), new Vector3(0.98f, 0.02f, 0.02f), neonMat); // Near landing edge
             CreateTrim(arrivalPlat.transform, new Vector3(0f, 0.51f, 0.49f), new Vector3(0.98f, 0.02f, 0.02f), darkTrimMat);
 
-            CreatePillar(sec5Root.transform, new Vector3(-3.8f, 1.5f, 211f), stoneMat, darkTrimMat);
-            CreatePillar(sec5Root.transform, new Vector3(3.8f, 1.5f, 211f), stoneMat, darkTrimMat);
-            CreatePillar(sec5Root.transform, new Vector3(-3.8f, 1.5f, 221f), stoneMat, darkTrimMat);
-            CreatePillar(sec5Root.transform, new Vector3(3.8f, 1.5f, 221f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(-3.8f, 1.5f, 218f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(3.8f, 1.5f, 218f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(-3.8f, 1.5f, 226f), stoneMat, darkTrimMat);
+            CreatePillar(sec5Root.transform, new Vector3(3.8f, 1.5f, 226f), stoneMat, darkTrimMat);
 
-            // Gateway Arch transitioning to Section 6 at Z = 221.5
-            CreateGatewayArch(sec5Root.transform, new Vector3(0f, 0f, 221.5f), stoneMat, neonMat);
+            // Gateway Arch transitioning to Section 6 at Z = 226.5
+            CreateGatewayArch(sec5Root.transform, new Vector3(0f, 0f, 226.5f), stoneMat, neonMat);
         }
 
         private static GameObject CreateWalkwayPlatform(Transform parent, string name, Vector3 pos, Vector3 scale, Material stoneMat, Material trimMat, Material neonMat)
@@ -1067,6 +1090,9 @@ namespace Voidbound.Editor
             spikeObj.transform.SetParent(parent);
             spikeObj.transform.position = position;
 
+            Rigidbody rb = spikeObj.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+
             MeshFilter mf = spikeObj.AddComponent<MeshFilter>();
             mf.sharedMesh = GetOrCreatePyramidMesh(size.x, size.z, size.y);
 
@@ -1088,6 +1114,9 @@ namespace Voidbound.Editor
             l.intensity = 0.8f;
 
             SpikeHazard hazard = spikeObj.AddComponent<SpikeHazard>();
+            HazardTriggerBridge bridge = spikeObj.AddComponent<HazardTriggerBridge>();
+            bridge.Initialize(hazard);
+
             SerializedObject so = new SerializedObject(hazard);
             so.FindProperty("hazardName").stringValue = "Impaled by Spikes";
             so.FindProperty("instantKill").boolValue = true;
@@ -1158,6 +1187,9 @@ namespace Voidbound.Editor
             laserRoot.transform.SetParent(parent);
             laserRoot.transform.position = new Vector3(0f, height, zPos);
 
+            Rigidbody rb = laserRoot.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+
             // Left and Right emitter housings mounted on side posts
             GameObject emitterLeft = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             emitterLeft.name = "Emitter_Left";
@@ -1191,6 +1223,8 @@ namespace Voidbound.Editor
             beamCol.isTrigger = true;
             beamCol.size = new Vector3(1.0f, 3.5f, 4.0f);
 
+            HazardTriggerBridge bridge = beamObj.AddComponent<HazardTriggerBridge>();
+
             // Central Beam Light
             GameObject lightObj = new GameObject("BeamLight");
             lightObj.transform.SetParent(laserRoot.transform);
@@ -1203,7 +1237,11 @@ namespace Voidbound.Editor
 
             // LaserHazard component
             LaserHazard hazard = laserRoot.AddComponent<LaserHazard>();
+            bridge.Initialize(hazard);
+
             SerializedObject so = new SerializedObject(hazard);
+            so.FindProperty("hazardName").stringValue = "Vaporized by Laser";
+            so.FindProperty("instantKill").boolValue = true;
             so.FindProperty("inactiveDuration").floatValue = inactiveDur;
             so.FindProperty("warningDuration").floatValue = warningDur;
             so.FindProperty("activeDuration").floatValue = activeDur;
@@ -1220,6 +1258,249 @@ namespace Voidbound.Editor
 
             so.ApplyModifiedProperties();
             return laserRoot;
+        }
+
+        private static GameObject CreateVerticalMovingLaser(Transform parent, string name, float zPos, float minHeight, float maxHeight,
+            float cycleDuration, float phaseOffsetDegrees, Material activeMat, Material emitterMat, Material darkTrimMat)
+        {
+            GameObject laserRoot = new GameObject(name);
+            laserRoot.transform.SetParent(parent);
+            laserRoot.transform.position = new Vector3(0f, 0f, zPos);
+
+            Rigidbody rb = laserRoot.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+
+            // Two stationary vertical guide posts on corridor sides
+            GameObject guideLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            guideLeft.name = "GuidePost_Left";
+            guideLeft.transform.SetParent(laserRoot.transform);
+            guideLeft.transform.localPosition = new Vector3(-2.4f, 1.5f, 0f);
+            guideLeft.transform.localScale = new Vector3(0.25f, 3.2f, 0.25f);
+            guideLeft.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+            Object.DestroyImmediate(guideLeft.GetComponent<Collider>());
+
+            GameObject guideRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            guideRight.name = "GuidePost_Right";
+            guideRight.transform.SetParent(laserRoot.transform);
+            guideRight.transform.localPosition = new Vector3(2.4f, 1.5f, 0f);
+            guideRight.transform.localScale = new Vector3(0.25f, 3.2f, 0.25f);
+            guideRight.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+            Object.DestroyImmediate(guideRight.GetComponent<Collider>());
+
+            // Moving assembly containing emitters and laser beam
+            GameObject assembly = new GameObject("MovingAssembly");
+            assembly.transform.SetParent(laserRoot.transform);
+            assembly.transform.localPosition = new Vector3(0f, minHeight, 0f);
+
+            // Moving emitter collars that ride up and down the posts
+            GameObject emitterLeft = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            emitterLeft.name = "Emitter_Left";
+            emitterLeft.transform.SetParent(assembly.transform);
+            emitterLeft.transform.localPosition = new Vector3(-2.35f, 0f, 0f);
+            emitterLeft.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            emitterLeft.transform.localScale = new Vector3(0.35f, 0.15f, 0.35f);
+            emitterLeft.GetComponent<Renderer>().sharedMaterial = emitterMat;
+            Object.DestroyImmediate(emitterLeft.GetComponent<Collider>());
+
+            GameObject emitterRight = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            emitterRight.name = "Emitter_Right";
+            emitterRight.transform.SetParent(assembly.transform);
+            emitterRight.transform.localPosition = new Vector3(2.35f, 0f, 0f);
+            emitterRight.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            emitterRight.transform.localScale = new Vector3(0.35f, 0.15f, 0.35f);
+            emitterRight.GetComponent<Renderer>().sharedMaterial = emitterMat;
+            Object.DestroyImmediate(emitterRight.GetComponent<Collider>());
+
+            // Beam Mesh
+            GameObject beamObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            beamObj.name = "BeamMesh";
+            beamObj.transform.SetParent(assembly.transform);
+            beamObj.transform.localPosition = Vector3.zero;
+            beamObj.transform.localScale = new Vector3(4.5f, 0.12f, 0.12f);
+            Renderer beamRenderer = beamObj.GetComponent<Renderer>();
+            beamRenderer.sharedMaterial = activeMat;
+
+            // Trigger BoxCollider
+            BoxCollider beamCol = beamObj.GetComponent<BoxCollider>();
+            beamCol.isTrigger = true;
+            beamCol.size = new Vector3(1.0f, 3.5f, 4.0f);
+
+            HazardTriggerBridge bridge = beamObj.AddComponent<HazardTriggerBridge>();
+
+            // Central Beam Light
+            GameObject lightObj = new GameObject("BeamLight");
+            lightObj.transform.SetParent(assembly.transform);
+            lightObj.transform.localPosition = Vector3.zero;
+            Light beamLight = lightObj.AddComponent<Light>();
+            beamLight.type = LightType.Point;
+            beamLight.color = new Color(1f, 0.15f, 0.15f);
+            beamLight.range = 5.0f;
+            beamLight.intensity = 2.5f;
+
+            VerticalMovingLaser hazard = laserRoot.AddComponent<VerticalMovingLaser>();
+            bridge.Initialize(hazard);
+
+            SerializedObject so = new SerializedObject(hazard);
+            so.FindProperty("hazardName").stringValue = "Vaporized by Laser";
+            so.FindProperty("instantKill").boolValue = true;
+            so.FindProperty("minHeight").floatValue = minHeight;
+            so.FindProperty("maxHeight").floatValue = maxHeight;
+            so.FindProperty("cycleDuration").floatValue = cycleDuration;
+            so.FindProperty("phaseOffsetDegrees").floatValue = phaseOffsetDegrees;
+            so.FindProperty("movingAssembly").objectReferenceValue = assembly.transform;
+            so.FindProperty("beamRenderer").objectReferenceValue = beamRenderer;
+            so.FindProperty("beamCollider").objectReferenceValue = beamCol;
+            so.FindProperty("beamLight").objectReferenceValue = beamLight;
+            so.ApplyModifiedProperties();
+
+            return laserRoot;
+        }
+
+        private static GameObject CreateRotatingLaserTurret(Transform parent, string name, Vector3 position, float rotationSpeed,
+            float beamLength, float beamHeight, Material activeMat, Material darkTrimMat, Material neonMat, Material emitterMat)
+        {
+            GameObject turretRoot = new GameObject(name);
+            turretRoot.transform.SetParent(parent);
+            turretRoot.transform.position = position;
+
+            Rigidbody rb = turretRoot.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+
+            // Base pedestal (stationary housing)
+            GameObject basePedestal = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            basePedestal.name = "Pedestal_Base";
+            basePedestal.transform.SetParent(turretRoot.transform);
+            basePedestal.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            basePedestal.transform.localScale = new Vector3(1.2f, 0.15f, 1.2f);
+            basePedestal.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+            Object.DestroyImmediate(basePedestal.GetComponent<Collider>());
+
+            // Pedestal glowing rune trim ring
+            GameObject runeRing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            runeRing.name = "Pedestal_RuneRing";
+            runeRing.transform.SetParent(turretRoot.transform);
+            runeRing.transform.localPosition = new Vector3(0f, 0.31f, 0f);
+            runeRing.transform.localScale = new Vector3(0.9f, 0.02f, 0.9f);
+            runeRing.GetComponent<Renderer>().sharedMaterial = neonMat;
+            Object.DestroyImmediate(runeRing.GetComponent<Collider>());
+
+            // Rotating head assembly
+            GameObject headObj = new GameObject("RotatingHead");
+            headObj.transform.SetParent(turretRoot.transform);
+            headObj.transform.localPosition = new Vector3(0f, beamHeight, 0f);
+
+            // Central Gun Hub / Emitter Head
+            GameObject hub = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            hub.name = "GunHub";
+            hub.transform.SetParent(headObj.transform);
+            hub.transform.localPosition = Vector3.zero;
+            hub.transform.localScale = new Vector3(0.55f, 0.25f, 0.55f);
+            hub.GetComponent<Renderer>().sharedMaterial = darkTrimMat;
+            Object.DestroyImmediate(hub.GetComponent<Collider>());
+
+            // Dual muzzle housings
+            GameObject muzzleLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            muzzleLeft.name = "Muzzle_Left";
+            muzzleLeft.transform.SetParent(headObj.transform);
+            muzzleLeft.transform.localPosition = new Vector3(-0.35f, 0f, 0f);
+            muzzleLeft.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+            muzzleLeft.GetComponent<Renderer>().sharedMaterial = emitterMat;
+            Object.DestroyImmediate(muzzleLeft.GetComponent<Collider>());
+
+            GameObject muzzleRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            muzzleRight.name = "Muzzle_Right";
+            muzzleRight.transform.SetParent(headObj.transform);
+            muzzleRight.transform.localPosition = new Vector3(0.35f, 0f, 0f);
+            muzzleRight.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+            muzzleRight.GetComponent<Renderer>().sharedMaterial = emitterMat;
+            Object.DestroyImmediate(muzzleRight.GetComponent<Collider>());
+
+            // Dual Continuous Laser Beam (Cube spanning along local X from -beamLength/2 to +beamLength/2)
+            GameObject beamObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            beamObj.name = "BeamMesh";
+            beamObj.transform.SetParent(headObj.transform);
+            beamObj.transform.localPosition = Vector3.zero;
+            beamObj.transform.localScale = new Vector3(beamLength, 0.12f, 0.12f);
+            Renderer beamRenderer = beamObj.GetComponent<Renderer>();
+            beamRenderer.sharedMaterial = activeMat;
+
+            // Trigger BoxCollider
+            BoxCollider beamCol = beamObj.GetComponent<BoxCollider>();
+            beamCol.isTrigger = true;
+            beamCol.size = new Vector3(1.0f, 3.5f, 4.0f);
+
+            HazardTriggerBridge bridge = beamObj.AddComponent<HazardTriggerBridge>();
+
+            // Central Laser Light
+            GameObject lightObj = new GameObject("TurretLight");
+            lightObj.transform.SetParent(headObj.transform);
+            lightObj.transform.localPosition = Vector3.zero;
+            Light beamLight = lightObj.AddComponent<Light>();
+            beamLight.type = LightType.Point;
+            beamLight.color = new Color(1f, 0.15f, 0.15f);
+            beamLight.range = 6.0f;
+            beamLight.intensity = 3.0f;
+
+            RotatingLaserTurret hazard = turretRoot.AddComponent<RotatingLaserTurret>();
+            bridge.Initialize(hazard);
+
+            SerializedObject so = new SerializedObject(hazard);
+            so.FindProperty("hazardName").stringValue = "Vaporized by Laser Turret";
+            so.FindProperty("instantKill").boolValue = true;
+            so.FindProperty("rotationSpeed").floatValue = rotationSpeed;
+            so.FindProperty("beamLength").floatValue = beamLength;
+            so.FindProperty("beamHeight").floatValue = beamHeight;
+            so.FindProperty("rotatingHead").objectReferenceValue = headObj.transform;
+            so.FindProperty("beamRenderer").objectReferenceValue = beamRenderer;
+            so.FindProperty("beamCollider").objectReferenceValue = beamCol;
+            so.FindProperty("beamLight").objectReferenceValue = beamLight;
+            so.ApplyModifiedProperties();
+
+            return turretRoot;
+        }
+
+        private static GameObject CreateCircularPlatform(Transform parent, string name, Vector3 position, float diameter,
+            Material stoneMat, Material trimMat, Material neonMat)
+        {
+            GameObject plat = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            plat.name = name;
+            plat.transform.SetParent(parent);
+            // PrimitiveType.Cylinder default height is 2. Scale y = 0.5 gives height = 1.0m.
+            plat.transform.position = position;
+            plat.transform.localScale = new Vector3(diameter, 0.5f, diameter);
+            plat.GetComponent<Renderer>().sharedMaterial = stoneMat;
+
+            // Replace default CapsuleCollider with MeshCollider for a perfectly flat top surface
+            MeshFilter mf = plat.GetComponent<MeshFilter>();
+            Object.DestroyImmediate(plat.GetComponent<CapsuleCollider>());
+            MeshCollider mc = plat.AddComponent<MeshCollider>();
+            mc.sharedMesh = mf.sharedMesh;
+
+            // Container for trim elements placed in unscaled space
+            GameObject trimsObj = new GameObject("Trims");
+            trimsObj.transform.SetParent(parent);
+            trimsObj.transform.position = position;
+
+            int segmentCount = 12;
+            float radius = diameter * 0.5f - 0.1f;
+            float segLength = (diameter * Mathf.PI / segmentCount) * 0.95f;
+            for (int i = 0; i < segmentCount; i++)
+            {
+                float angle = i * (360f / segmentCount) * Mathf.Deg2Rad;
+                float segX = Mathf.Cos(angle) * radius;
+                float segZ = Mathf.Sin(angle) * radius;
+
+                GameObject trimSeg = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                trimSeg.name = $"Trim_Ring_{i}";
+                trimSeg.transform.SetParent(trimsObj.transform);
+                trimSeg.transform.localPosition = new Vector3(segX, 0.51f, segZ);
+                trimSeg.transform.localRotation = Quaternion.Euler(0f, -angle * Mathf.Rad2Deg + 90f, 0f);
+                trimSeg.transform.localScale = new Vector3(segLength, 0.02f, 0.12f);
+                trimSeg.GetComponent<Renderer>().sharedMaterial = neonMat;
+                Object.DestroyImmediate(trimSeg.GetComponent<Collider>());
+            }
+
+            return plat;
         }
 
         private static void CreateBridgeSegment(Transform parent, string name, Vector3 pos, Vector3 scale, Material stoneMat, Material trimMat)
