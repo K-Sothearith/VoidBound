@@ -29,12 +29,20 @@ namespace Voidbound.Obstacles
             ProcessHit(collision.gameObject);
         }
 
+        private void OnTriggerStay(Collider other)
+        {
+            ProcessHit(other.gameObject);
+        }
+
         public virtual void ProcessHit(GameObject target)
         {
-            if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
-            {
-                return;
-            }
+            TryProcessHit(target);
+        }
+
+        protected bool TryProcessHit(GameObject target)
+        {
+            var manager = GameManager.Instance;
+            if (target == null || manager == null || !manager.CanAcceptPlayerDeath) return false;
 
             var deathHandler = target.GetComponent<PlayerDeathHandler>();
             if (deathHandler == null)
@@ -44,8 +52,7 @@ namespace Voidbound.Obstacles
 
             if (deathHandler != null)
             {
-                deathHandler.HandleDeath(hazardName);
-                return;
+                return deathHandler.TryHandleDeath(hazardName);
             }
 
             var playerController = target.GetComponent<PlayerController>();
@@ -56,11 +63,9 @@ namespace Voidbound.Obstacles
 
             if (playerController != null || target.CompareTag("Player"))
             {
-                if (GameManager.Instance != null)
-                {
-                    GameManager.Instance.OnPlayerDied();
-                }
+                return manager.TryPlayerDeath();
             }
+            return false;
         }
     }
 }

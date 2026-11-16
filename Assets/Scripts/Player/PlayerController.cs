@@ -314,6 +314,13 @@ namespace Voidbound.Player
             // Detect moving platform beneath feet (upward collision normal)
             if (hit.normal.y > 0.5f)
             {
+                // CharacterController impacts do not dispatch OnCollisionEnter on the platform.
+                var collapsingPlatform = hit.collider.GetComponentInParent<Voidbound.Interactions.CollapsingPlatform>();
+                if (collapsingPlatform != null)
+                {
+                    collapsingPlatform.TriggerCollapse();
+                }
+
                 var mp = hit.collider.GetComponentInParent<Voidbound.Interactions.MovingPlatform>();
                 if (mp != null)
                 {

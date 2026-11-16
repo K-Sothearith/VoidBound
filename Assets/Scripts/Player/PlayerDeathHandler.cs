@@ -54,7 +54,13 @@ namespace Voidbound.Player
 
         public void HandleDeath(string reason = "Death")
         {
-            if (isDead) return;
+            TryHandleDeath(reason);
+        }
+
+        public bool TryHandleDeath(string reason = "Death")
+        {
+            var manager = GameManager.Instance;
+            if (isDead || manager == null || !manager.CanAcceptPlayerDeath) return false;
 
             isDead = true;
             respawnTimer = deathFreezeDuration;
@@ -64,10 +70,7 @@ namespace Voidbound.Player
                 playerController.SetInputEnabled(false);
             }
 
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.OnPlayerDied();
-            }
+            return manager.TryPlayerDeath();
         }
 
         private void OnTriggerEnter(Collider other)

@@ -49,9 +49,8 @@ namespace Voidbound.Obstacles
 
         public override void ProcessHit(GameObject target)
         {
-            if (hasKilled) return;
-            hasKilled = true;
-            base.ProcessHit(target);
+            // Diagnostic history only. The manager owns death debounce, not the hazard.
+            if (TryProcessHit(target)) hasKilled = true;
         }
 
         private void OnRespawnRequested(Vector3 position, Quaternion rotation)

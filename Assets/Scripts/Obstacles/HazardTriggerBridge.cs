@@ -31,5 +31,11 @@ namespace Voidbound.Obstacles
                 parentHazard.ProcessHit(other.gameObject);
             }
         }
+
+        private void OnTriggerStay(Collider other)
+        {
+            // A player already overlapping when immunity expires must become vulnerable again.
+            if (parentHazard != null) parentHazard.ProcessHit(other.gameObject);
+        }
     }
 }

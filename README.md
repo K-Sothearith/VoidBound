@@ -1,140 +1,124 @@
 # VOIDBOUND
 
-*A first-person parkour journey through floating ruins in a night-sky void.*
+*A first-person platforming expedition through floating ruins in a dark, futuristic void.*
 
-> **Development status:** In progress — Phases 01, 02, 03, 04, 05, and 06 implemented. The complete seven-section obstacle course and victory flow are fully playable.
-
-## Overview
-
-Voidbound is a single-player, first-person 3D obstacle-course game made in Unity for the Cambodia Academy of Digital Technology (CADT) Game Development mid-term group project. Cross suspended stone platforms, survive moving obstacles, solve physics-based challenges, and eventually reach the final portal.
-
-The visual direction is a minimalist, low-poly world of floating stone structures, blue-violet lighting, and a deep night-space backdrop. The visual presentation is still being developed.
+VoidBound is a single-player Unity game created for the CADT Game Development group project. Cross seven obstacle-course sections, survive hazards, solve a physics puzzle, and reach the final extraction portal.
 
 ## Objective and rules
 
-Reach the final extraction portal by completing seven sections in sequence. The game starts with **three lives**. Falling into the void or touching a lethal obstacle costs one life. If lives remain, the player respawns at the latest activated checkpoint; after the third death, the game ends and can be restarted.
+Reach the extraction portal at the end of Section 7.
 
-**Checkpoint locations:**
-- **Initial spawn:** Beginning of Section 1; used until the first checkpoint is reached.
-- **Checkpoint 1:** At the beginning of Section 4 (relocated from Section 3 per Phase 05 specification).
-- **Checkpoint 2:** At the beginning of Section 6.
+- Start each run with **three lives**. Touching spikes or active lasers, or falling into the void, costs one life.
+- Swinging hammers knock you away; recover your footing or risk falling.
+- With lives remaining, respawn at your latest checkpoint. Before activating a checkpoint, respawn at the starting platform.
+- There are **two checkpoints**: the entrances to **Section 4** and **Section 6**.
+- Time laser cycles, ride moving platforms, and leave collapsing stones before they fall.
+- Push both crates onto the two pressure plates to open the puzzle chamber's exit. Use its reset terminal if needed.
+- Losing all lives ends the run. Restart restores lives, time, checkpoints, puzzle and obstacle states.
+- Entering the final portal completes the game and displays your completion time and death count. The timer measures your run; it is not a countdown.
 
-There are no other planned checkpoints (exactly two checkpoints total). The elapsed-time HUD tracks the run; the game does not currently require a countdown to win.
+## The seven sections
 
-**Hammer behavior (revised after Phase 02):** The three swinging hammers knock the player around rather than guaranteeing immediate death on contact. A skilled player may recover and land back on the walkway. Falling into the void still causes death. Spikes and active lasers are planned as instant-death hazards.
+| Section | Challenge |
+|---|---|
+| 1 — Movement Tutorial | Learn movement, jumping and interaction |
+| 2 — Hammer Swing | Cross the bridge between three swinging hammers |
+| 3 — Moving Platform | Summon a platform using a pressure plate, then ride across the gap |
+| 4 — Spike Path | Navigate narrow platforms and spike formations |
+| 5 — Laser Corridor | Time pulsing, moving and rotating laser hazards |
+| 6 — Physics Chamber | Push two crates onto pressure plates to unlock the exit |
+| 7 — Final Gauntlet | Survive lasers, platform transfers and collapsing stones to reach extraction |
 
 ## Controls
 
 | Input | Action |
 |---|---|
-| `W`, `A`, `S`, `D` | Move |
-| Mouse | Look around |
-| `Space` | Jump |
-| `Left Shift` | Sprint |
-| `E` | Interact with nearby objects / Reset crates |
-| `Esc` | Pause / resume |
-| On-screen buttons | Start, resume, restart (as available) |
+| **W / A / S / D** | Move |
+| **Mouse** | Look |
+| **Space** | Jump |
+| **Left Shift** | Sprint |
+| **E** | Interact with a nearby terminal, including the crate reset terminal |
+| **Esc** | Pause / resume |
+| **On-screen buttons** | Start, resume, restart or quit when available |
 
-## Level design
+Push crates by walking into them. Follow the on-screen interaction prompts near terminals.
 
-| Section | Challenge | Status |
-|---|---|---|
-| 1. Movement Tutorial | Learn movement and jumping; interact with a test terminal | Implemented |
-| 2. Hammer Swing | Cross three swinging hammers with safe resting areas | Implemented; manually traversed |
-| 3. Moving Platform | Stand on a pressure plate to summon a platform; release it and jump aboard as it returns | Implemented |
-| 4. Spike Path | Navigate spike formations on a narrow bridge | Implemented |
-| 5. Laser Corridor | Time movement around active and inactive lasers | Implemented |
-| 6. Physics Chamber | Push two crates from opposite sides onto two plates to open a door | Implemented |
-| 7. Final Gauntlet | Traverse timed lasers, moving platforms, and collapsing platforms to reach extraction portal | Implemented |
+## Unity version and requirements
 
-The temporary prototype finish marker from Phase 01 has been removed from the playable scene in Phase 03 cleanup; victory is awarded by entering the animated Extraction Portal at the end of Section 7.
+| Component | Version / requirement |
+|---|---|
+| Unity Editor | **6000.3.8f1** (Unity 6) |
+| Render pipeline | Universal Render Pipeline **17.3.0** |
+| Input | Unity Input System **1.18.0** |
+| Controls | Keyboard and mouse |
+| Available standalone build | **macOS Development build** |
 
-## Current implementation
+Package versions are recorded in `Packages/manifest.json` and `Packages/packages-lock.json`.
 
-**Phase 01 — Foundation:** Main `Voidbound` scene; first-person `CharacterController`; Unity Input System movement; start screen with blurred background; crosshair, lives, elapsed timer and section label; interaction terminal; pause and game-over screens; fall detection and respawning. Antigravity's Phase 01 report records 29 passing automated assertions and no compilation errors.
+## Setup and play in Unity
 
-**Phase 02 — Swinging Hammers:** Three swinging hammer obstacles with different phase offsets, two rest areas, section trigger, reusable hazard code, and physics components. Antigravity's original Phase 02 report records 30 passing automated assertions and no compilation errors. **Those results predate a manual remake of the hammer behavior**, so they should not be treated as verification of the current modified collision behavior. The updated section has been manually confirmed traversable.
+1. Install **Unity Hub** and Unity Editor **6000.3.8f1**. Include **Mac Build Support** if you plan to create a macOS build.
+2. Clone the repository:
 
-**Phase 03 — Pressure-Plate Moving Platform & Checkpoint 1:** Section 3 departure and arrival platforms; Checkpoint 1 initially at Section 3 entrance with visual indicator light/emission and respawn point; depressible pressure plate situated close to the void ledge; kinematic moving platform traversing a 20m lethal void gap at 6.5 m/s with return delay; reliable zero-slip CharacterController player transport via unified single-move physics; two-tier gravity architecture (normal platform jump gravity -20 m/s² with 1.8m jump apex, accelerated -45 m/s² void plunge gravity below platform level); eliminated mid-air jump spam exploit; restored on-screen notification text exclusively for checkpoint activation while keeping general event reporting banners silenced; 89 passing automated assertions with zero compilation errors and full Phase 01/02 regression pass (161 total passing assertions). Scene cleanup performed: Terminal Alpha reoriented to face player spawn, temporary Phase 01 finish marker removed from scene, and Checkpoint 1 positioned inward for prominence without blocking player path.
-
-**Phase 04 — Spike Path & Laser Corridor:** Section 4 narrow stone bridge over lethal void with single edge spikes, a 6-spike hurdle cluster jumping challenge, and three staggered offset precision barriers with safe corridors; Section 5 corridor featuring three laser challenges: Challenge 1 single pulsing laser with amber warning telegraphs; Challenge 2 continuous vertical moving lasers oscillating between 0.4m (jumpable) and 2.4m (runnable underneath) out of phase; Challenge 3 dual circular floating platforms over the void with central rotating dual-beam laser turrets (Platform 1 rotating clockwise at +35°/s, Platform 2 rotating counter-clockwise at -48°/s); immediate lethal contact detection on all lasers with single-death debounce guards; deaths in Section 4 and 5 reliably respawn at Checkpoint 1; expanded lethal void kill volume across all sections; 65 passing automated assertions with zero compilation errors and full Phase 01/02/03 regression pass (226 total passing assertions across the project).
-
-**Phase 05 — Physics Chamber & Checkpoint 2:** Relocated Checkpoint 1 from Section 3 entrance to Section 4 entrance (approximately Z=107.5m) to maintain exactly two checkpoints total; placed Checkpoint 2 at Section 6 entrance (Z=228.0m); implemented Section 6 Physics Chamber featuring two pushable dynamic Rigidbody crates (tuned at 25kg mass, linear damping 4.0, angular damping 5.0, rotation X/Z constraints to eliminate tumbling), two crate-detecting pressure plates with depression animation and emissive feedback, and a locked sci-fi exit portal featuring dual sliding blast doors that unlock only when both plates are simultaneously active; integrated lost crate anti-softlock systems via automatic void fall recovery and an interactive `CrateResetTerminal` (E-key interactable); enhanced `PlayerController` to push dynamic physics objects via `OnControllerColliderHit`; extended kill volume pit coverage through Section 6 (length 550m); 65 automated test assertions passing in `VoidboundPhase05Tests.cs` and 65 regression test assertions passing in `VoidboundPhase04Tests.cs` with zero compilation errors.
-
-**Phase 06 — Final Gauntlet & Victory Sequence:** Extended course through Section 7 ($Z = 274.0\,\text{m} \rightarrow 387.0\,\text{m}$) with three consecutive challenges: (1) Challenge 1 timed laser corridor with 3 instant-kill pulsed lasers, amber telegraph warnings, and staggered safe traversal windows; (2) Challenge 2 with 3 autonomously oscillating moving platforms traversing lethal void gaps while reliably carrying the CharacterController with zero slip; (3) Challenge 3 with 4 stepping stone collapsing platforms that flash amber and shake laterally for 0.8s on player contact before dropping into the void; safe landing zones (Rest Platform 18 and 19) between challenges; Extraction Sanctuary and animated swirling Extraction Portal at $Z = 383.0\,\text{m}$ triggering the victory state (locks player movement, pauses timer, stops physics, releases cursor); comprehensive Victory UI overlay showing `EXTRACTION SUCCESSFUL`, final completion time, running death counter, `Restart Game`, and `Quit Game`; full game reset restoring all systems, platforms, timers, and lives; strictly maintained two checkpoints total (Checkpoint 1 at Section 4, Checkpoint 2 at Section 6; deaths in Section 7 respawn at Checkpoint 2); extended kill volume to length 650m ($Z \in [-145\,\text{m}, +505\,\text{m}]$); 112 automated test assertions passing in `VoidboundPhase06Tests.cs` and 65 regression test assertions passing in `VoidboundPhase05Tests.cs` with zero compilation errors.
-
-Future work includes Phase 07 (environment art, volumetric lighting, stars skybox, audio soundtrack, and post-processing polish) and Phase 08 (standalone macOS build, recording, and submission packaging).
-
-## Requirements and setup
-
-- **Unity Editor:** `6000.3.8f1`
-- **Render pipeline:** Universal Render Pipeline (URP), package `17.3.0`
-- **Input:** Unity Input System, package `1.18.0`
-- **Primary development platform:** macOS
-- **Target standalone build:** macOS or Windows (to be confirmed and tested)
-
-### Open and play in Unity
-
-1. Clone the repository:
    ```bash
-   git clone <REPOSITORY_URL>
-   cd <REPOSITORY_FOLDER>
+   git clone https://github.com/K-Sothearith/CyberEscape.git
+   cd CyberEscape
    ```
-2. Open **Unity Hub** and select **Add project from disk**, pointing it to the cloned project folder.
-3. Use Unity Editor **6000.3.8f1** and allow the project packages and assets to import.
-4. Open `Assets/Scenes/Voidbound.unity` if it is not already open.
-5. Press **Play** in the Unity Editor.
-6. Click **Initiate Expedition** on the start screen, then use the controls above.
 
-The standalone build is not yet published. When available, its ZIP must include all files required to launch the game, not just the executable.
+3. In Unity Hub, choose **Add project from disk** and select the cloned folder containing `Assets`, `Packages` and `ProjectSettings`.
+4. Open the project with the specified Editor version and wait for assets and packages to finish importing.
+5. Open **`Assets/Scenes/Voidbound.unity`**.
+6. Press **Play**, then select **Initiate Expedition**.
+7. Follow the tutorial and controls above. Press **Esc** to pause or restart the run.
 
-## Repository structure
+Open the existing scene directly; scene-generation tools are not required to play. Unity generates its local cache folders on first import.
 
-```text
-Assets/
-  Scenes/                 # Main Voidbound scene
-  Scripts/
-    Core/                 # Game state, checkpoints, section triggers, kill volumes
-    Player/               # Movement, interaction, death handling
-    Interactions/         # Interactable objects and tutorial marker
-    Obstacles/            # Hammer and hazard behavior
-    UI/                   # Menu and HUD
-    Editor/               # Scene-building tools and tests
-  Materials/
-  Settings/               # URP post-processing assets
-Packages/                 # Package manifest and lockfile
-ProjectSettings/          # Unity project settings
-```
+## Playable build
 
-Keep Unity `.meta` files in Git. Do not commit generated `Library/`, `Temp/`, or `Obj/` folders.
+**[Download VoidBound for macOS](BUILD_DOWNLOAD_URL)**
 
-## Team and contributions
+> **Placeholder:** Replace `BUILD_DOWNLOAD_URL` with the public download link to the packaged macOS build, such as a GitHub Release or shared download. No public download has been linked yet.
 
-> Complete before submission. Every member should be able to explain their work and have meaningful Git history.
+1. Download and extract the complete build archive.
+2. Open **`VoidBound.app`** on macOS.
+3. Select **Initiate Expedition** and play using a keyboard and mouse.
 
-| Team member | Contribution |
+The locally generated development build is located at `Builds/PassB/VoidBound.app`. Build files are ignored by Git and are distributed separately. A Windows build is not supplied.
+
+## Gameplay video
+
+**[Watch the gameplay recording on YouTube](https://www.youtube.com/watch?v=VIDEO_ID)**
+
+> **Placeholder:** Replace `VIDEO_ID` with the ID of the uploaded gameplay recording.
+
+## Team members and contributions
+
+| Team member | Role / responsibilities | Contributions |
+|---|---|---|
+| Kong Sothearith | Project Leader | [Sections, mechanics, art, testing or integration contributed] |
+| Kov Cheaching | Scene Maker | [Sections, mechanics, art, testing or integration contributed] |
+| Sereywath Rathanak | Scene Maker | [Sections, mechanics, art, testing or integration contributed] |
+| Sakal Munyreach | Scene Maker | [Sections, mechanics, art, testing or integration contributed] |
+
+## Asset credits
+
+| Asset | Creator / source | Use in VoidBound |
+|---|---|---|
+| **LED Light Blocks** | **Tomerinio**, Unity Asset Store ([store reference](https://assetstore.unity.com/popular-assets/lighting-assets)) | LED accents and decorative elements, especially in Section 2; imported under `Assets/Tomerinio/LEDLightBlocks` |
+
+Third-party asset ownership remains with its creator.
+
+## Tutorial references and scripting assistance
+
+The primary scripting assistance came from **Antigravity** and **OpenAI ChatGPT / Codex**.
+
+| Reference / assistant | Contribution |
 |---|---|
-| [Member 1] | [Specific work and commits] |
-| [Member 2] | [Specific work and commits] |
-| [Member 3] | [Specific work and commits] |
-| [Member 4, if applicable] | [Specific work and commits] |
+| **Antigravity** | Initial C# gameplay implementation, section mechanics, integration and automated validation assistance |
+| **OpenAI ChatGPT / Codex** | Planning and documentation; independent QA; collision, respawn, platform and restart repairs; visual/UI polish; regression testing and build verification |
 
-## Credits and development assistance
+The team reviewed, integrated and manually tested the game. Team members remain responsible for understanding and explaining the submitted implementation.
 
-- **Engine and packages:** Unity 6, Universal Render Pipeline, Unity Input System.
-- **External assets, music, fonts, tutorials:** [List names, creators, licenses and links for anything used; write “None” if applicable.]
-- **AI assistance:** ChatGPT assisted with game planning, specification and documentation. Antigravity assisted with Unity implementation and automated validation. Team members are responsible for reviewing, testing and understanding submitted work. [Expand or adjust to reflect actual use and course academic-integrity rules.]
+## Project status
 
-## Submission links
-
-| Deliverable | Link / status |
-|---|---|
-| Source repository | [Add GitHub repository URL] |
-| Gameplay recording (MP4) | [Add publicly accessible YouTube or Google Drive URL] |
-| Standalone build (ZIP) | [Add publicly accessible Google Drive or GitHub Releases URL] |
-
-**Submission checklist:** Verify that the Unity project opens, the standalone build runs outside the Editor, the gameplay video shows controls/obstacles/physics/success or failure/restart, all links are accessible without permission requests, and all team contributions are credited.
-
----
-
-*CADT Game Development — Mid-Term Group Project: Playable Obstacle Course.*
+All seven sections are implemented. Final validation and testing are conducted. A successful macOS Development build. The project owner subsequently confirmed successful personal manual testing and accepted the result.

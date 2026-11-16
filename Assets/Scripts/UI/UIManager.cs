@@ -228,12 +228,8 @@ namespace Voidbound.UI
         public void UpdateLivesDisplay(int current, int max)
         {
             if (livesText == null) return;
-            string hearts = "";
-            for (int i = 0; i < max; i++)
-            {
-                hearts += (i < current) ? "❤️ " : "🖤 ";
-            }
-            livesText.text = $"LIVES: {hearts.Trim()}";
+            // Numeric lives remain legible without relying on platform-specific emoji glyphs.
+            livesText.text = $"LIVES  {current} / {max}";
         }
 
         public void UpdateTimerDisplay(float timeInSeconds)

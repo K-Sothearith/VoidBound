@@ -67,7 +67,7 @@ namespace Voidbound.Core
 
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.SetCheckpoint(RespawnPosition, RespawnRotation, checkpointName);
+                GameManager.Instance.SetCheckpoint(RespawnPosition, RespawnRotation, checkpointName, sectionName);
                 if (!string.IsNullOrEmpty(sectionName))
                 {
                     GameManager.Instance.SetSection(sectionName);

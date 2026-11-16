@@ -113,7 +113,11 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
-Phase3_Report.md
-Phase4_Report.md
-Phase5_Report.md
-Phase6_Report.md
+# Keep the public README; retain other root documentation locally.
+/*.md
+!/README.md
+
+# Internal QA reports and captured evidence
+/QA_EVIDENCE/
+/PASS_A_EVIDENCE/
+/PASS_B_EVIDENCE/

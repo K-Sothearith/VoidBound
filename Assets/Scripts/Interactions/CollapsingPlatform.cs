@@ -163,6 +163,7 @@ namespace Voidbound.Interactions
         public void TriggerCollapse()
         {
             if (currentState != CollapsingPlatformState.Idle) return;
+            if (GameManager.Instance == null || !GameManager.Instance.IsPlaying) return;
 
             currentState = CollapsingPlatformState.Warning;
             warningTimer = warnDuration;

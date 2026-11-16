@@ -24,6 +24,11 @@ namespace Voidbound.Core
             TriggerKill(other.gameObject);
         }
 
+        private void OnTriggerStay(Collider other)
+        {
+            TriggerKill(other.gameObject);
+        }
+
         public void TriggerKill(GameObject target)
         {
             var deathHandler = target.GetComponent<Voidbound.Player.PlayerDeathHandler>();

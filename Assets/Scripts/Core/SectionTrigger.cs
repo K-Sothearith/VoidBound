@@ -25,7 +25,10 @@ namespace Voidbound.Core
 
         private void OnTriggerEnter(Collider other)
         {
-            if (triggerOnce && hasTriggered) return;
+            var manager = GameManager.Instance;
+            if (manager == null || !manager.IsPlaying) return;
+            // A previously visited entrance must still restore the label after respawn/backtracking.
+            if (triggerOnce && hasTriggered && manager.CurrentSectionName == sectionName) return;
 
             if (other.CompareTag("Player") || other.GetComponent<PlayerController>() != null)
             {
@@ -40,6 +43,16 @@ namespace Voidbound.Core
         public void ResetTrigger()
         {
             hasTriggered = false;
+        }
+
+        private void Start()
+        {
+            if (GameManager.Instance != null) GameManager.Instance.OnGameReset += ResetTrigger;
+        }
+
+        private void OnDestroy()
+        {
+            if (GameManager.Instance != null) GameManager.Instance.OnGameReset -= ResetTrigger;
         }
     }
 }

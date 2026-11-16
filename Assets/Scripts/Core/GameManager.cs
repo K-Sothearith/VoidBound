@@ -18,6 +18,7 @@ namespace Voidbound.Core
     /// </summary>
     public class GameManager : MonoBehaviour
     {
+        public const string InitialSectionName = "Section 1: Movement Tutorial";
         private static GameManager instance;
         public static GameManager Instance
         {
@@ -47,6 +48,7 @@ namespace Voidbound.Core
         private Quaternion initialSpawnRotation;
         private Vector3 activeCheckpointPosition;
         private Quaternion activeCheckpointRotation;
+        private string activeCheckpointSectionName = InitialSectionName;
         private bool hasCustomCheckpoint;
 
         // Death guard to prevent overlapping deductions
@@ -70,6 +72,7 @@ namespace Voidbound.Core
         public float ElapsedTime => elapsedTime;
         public string CurrentSectionName => currentSectionName;
         public bool IsPlaying => currentState == GameState.Playing;
+        public bool CanAcceptPlayerDeath => IsPlaying && !isRespawning;
         public bool HasCustomCheckpoint => hasCustomCheckpoint;
         public Vector3 ActiveCheckpointPosition => activeCheckpointPosition;
         public Quaternion ActiveCheckpointRotation => activeCheckpointRotation;
@@ -136,10 +139,11 @@ namespace Voidbound.Core
             }
         }
 
-        public void SetCheckpoint(Vector3 position, Quaternion rotation, string checkpointName = "Checkpoint")
+        public void SetCheckpoint(Vector3 position, Quaternion rotation, string checkpointName = "Checkpoint", string sectionName = null)
         {
             activeCheckpointPosition = position;
             activeCheckpointRotation = rotation;
+            activeCheckpointSectionName = string.IsNullOrEmpty(sectionName) ? currentSectionName : sectionName;
             hasCustomCheckpoint = true;
             ShowNotification($"Checkpoint Activated: {checkpointName}", 2.5f);
         }
@@ -163,6 +167,7 @@ namespace Voidbound.Core
             hasCustomCheckpoint = false;
             activeCheckpointPosition = initialSpawnPosition;
             activeCheckpointRotation = initialSpawnRotation;
+            activeCheckpointSectionName = InitialSectionName;
             isRespawning = false;
 
             Time.timeScale = 1.0f;
@@ -170,6 +175,7 @@ namespace Voidbound.Core
             OnLivesChanged?.Invoke(currentLives, maxLives);
             OnRespawnRequested?.Invoke(initialSpawnPosition, initialSpawnRotation);
             OnGameReset?.Invoke();
+            SetSection(InitialSectionName);
             ShowNotification("Expedition Initiated. Reach the Extraction Portal.", 3.0f);
         }
 
@@ -196,12 +202,14 @@ namespace Voidbound.Core
             hasCustomCheckpoint = false;
             activeCheckpointPosition = initialSpawnPosition;
             activeCheckpointRotation = initialSpawnRotation;
+            activeCheckpointSectionName = InitialSectionName;
             isRespawning = false;
 
             SetState(GameState.Playing);
             OnLivesChanged?.Invoke(currentLives, maxLives);
             OnRespawnRequested?.Invoke(initialSpawnPosition, initialSpawnRotation);
             OnGameReset?.Invoke();
+            SetSection(InitialSectionName);
             ShowNotification("Course Reset. All lives restored.", 2.5f);
         }
 
@@ -211,9 +219,14 @@ namespace Voidbound.Core
         /// </summary>
         public void OnPlayerDied()
         {
-            if (isRespawning || currentState != GameState.Playing)
+            TryPlayerDeath();
+        }
+
+        public bool TryPlayerDeath()
+        {
+            if (!CanAcceptPlayerDeath)
             {
-                return;
+                return false;
             }
 
             isRespawning = true;
@@ -230,8 +243,10 @@ namespace Voidbound.Core
             else
             {
                 ShowNotification($"Vessel Destroyed! {currentLives} {(currentLives == 1 ? "life" : "lives")} remaining.", 2.0f);
+                SetSection(activeCheckpointSectionName);
                 OnRespawnRequested?.Invoke(activeCheckpointPosition, activeCheckpointRotation);
             }
+            return true;
         }
 
         public void ResetRespawnGuard()

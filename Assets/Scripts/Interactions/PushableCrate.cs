@@ -128,10 +128,12 @@ namespace Voidbound.Interactions
             {
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
+                // Reset the physics pose too: interpolation can overwrite a Transform-only teleport.
+                rb.position = initialPosition;
+                rb.rotation = initialRotation;
             }
 
-            transform.position = initialPosition;
-            transform.rotation = initialRotation;
+            transform.SetPositionAndRotation(initialPosition, initialRotation);
         }
 
         private void HandlePlayerRespawn(Vector3 pos, Quaternion rot)

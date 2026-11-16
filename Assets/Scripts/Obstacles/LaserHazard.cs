@@ -42,7 +42,6 @@ namespace Voidbound.Obstacles
         private LaserState currentState;
         private float stateTimer;
         private float initialDelayTimer;
-        private bool hasKilledThisCycle;
 
         public LaserState CurrentState => currentState;
         public float InactiveDuration { get => inactiveDuration; set => inactiveDuration = value; }
@@ -154,7 +153,6 @@ namespace Voidbound.Obstacles
         public void SetState(LaserState newState)
         {
             currentState = newState;
-            hasKilledThisCycle = false;
 
             switch (currentState)
             {
@@ -262,9 +260,7 @@ namespace Voidbound.Obstacles
         public override void ProcessHit(GameObject target)
         {
             if (currentState != LaserState.Active) return;
-            if (hasKilledThisCycle) return;
-            hasKilledThisCycle = true;
-            base.ProcessHit(target);
+            TryProcessHit(target);
         }
 
         private void OnRespawnRequested(Vector3 position, Quaternion rotation)
@@ -274,7 +270,6 @@ namespace Voidbound.Obstacles
 
         public void ResetLaser()
         {
-            hasKilledThisCycle = false;
             initialDelayTimer = initialDelay;
 
             if (initialDelayTimer > 0f)
